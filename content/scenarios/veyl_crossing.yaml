@@ -1,0 +1,37 @@
+# The Veyl Crossing (concept doc, Sample scenario 1). Entity IDs follow the order of each list.
+id: veyl_crossing
+name: The Veyl Crossing
+start_date: 2031-03-03        # D-004: Day 0 is Monday 3 March 2031
+last_day: 90                  # D-018: Day 0 through Day 90 inclusive
+default_seed: 20310303
+player: kestria
+
+nations:
+  - id: kestria
+    name: Republic of Kestria
+  - id: varan
+    name: Varan Union
+
+# D-005: two provinces in full detail, Kestria Interior and Varan as aggregate blocks.
+# Corruption (0-100, spec Data model: Province) is a starting value; nothing changes it until later milestones.
+provinces:
+  - id: kestria_east_ossen
+    name: Ossen East
+    owner: kestria
+    detail: full
+    corruption: 18
+  - id: veyl
+    name: Veyl
+    owner: kestria
+    detail: full
+    corruption: 26
+  - id: kestria_interior
+    name: Kestria Interior
+    owner: kestria
+    detail: block
+    corruption: 15
+  - id: varan_core
+    name: Varan
+    owner: varan
+    detail: block
+    corruption: 34

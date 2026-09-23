@@ -1,0 +1,11 @@
+# CASCADE balance: every tunable number in the game lives in this file.
+# The loader is strict: a missing key, an unknown key, or too many decimals stops the game with the file and line.
+# Numbers are exact decimals (no 1e-3 style). Comments cite the spec section each value comes from.
+
+sim:
+  crisis:
+    # Spec, Crisis sub-ticks: "The flag clears after 48 stable hours."
+    clear_after_stable_hours: 48
+  state_hash:
+    # Spec, Determinism rules: "peers compare a hash of full state every 30 ticks".
+    check_interval_days: 30
