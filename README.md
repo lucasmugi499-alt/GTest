@@ -11,8 +11,8 @@ A near-future grand strategy game with deep simulation and a story engine on top
 | Milestone | What it adds | State |
 | --- | --- | --- |
 | M0 Setup | Tools, folder layout, this README | Done |
-| M1 Sim core | Fixed-point math, RNG, scheduler, content loader, state hash | Next |
-| M2 Economy and grid | Production, stockpiles, transport, fab, grid, daily readout | |
+| M1 Sim core | Fixed-point math, RNG, scheduler, content loader, state hash | Done |
+| M2 Economy and grid | Production, stockpiles, transport, fab, grid, daily readout | Next |
 | M3 Society and conflict | Politics, information, cyber, military (light), escalation | |
 | M4 Narrative | Storylets, Director, Chronicle; playable as text | |
 | M5 Godot UI | Map, Cascade view, Brief, storylet dialog, readouts | |
@@ -48,7 +48,19 @@ dotnet build
 dotnet test
 ```
 
-**Run the sim in the terminal** (the headless runner). At M0 it only prints a banner:
+**Run the sim in the terminal** (the headless runner). This plays Day 0 to Day 90 and prints one line per day, with the state hash every 30 days. Nothing happens in the world yet; the systems arrive in M2 and M3.
+
+```bash
+dotnet run --project tools -- run
+```
+
+**Check determinism yourself.** Run this twice: both runs must print the same hash. A different `--seed` gives a different hash.
+
+```bash
+dotnet run --project tools -- hash --seed 42
+```
+
+**See all the runner's commands:**
 
 ```bash
 dotnet run --project tools

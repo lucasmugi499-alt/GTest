@@ -130,3 +130,63 @@ Defines "the eastern blackout must cut legacy chip output by 35 to 45%".
 - Small commits as work goes.
 - One commit at the end of each milestone.
 - **Push to `main` on GitHub only after the owner has said OK to that milestone.**
+
+## D-017 · Random roll coordinates
+
+Refines the spec's Determinism rules.
+
+- **tick** = day × 32 + slot. Slots 0–23 are crisis hours, 24 is the daily pass, 25 weekly and 26 monthly. So an hourly roll and a daily roll on the same day never share a number.
+- **system** is a fixed number per system (`SystemId`): phases use their phase number, weekly systems 100+, monthly 200+.
+- **entity** packs (entity kind, ID).
+- **roll index** counts up within one (system, entity) stream.
+- **The hash** is a chain of SplitMix64 finalizers. It is locked by a test; changing it invalidates every replay.
+- **Normal draws** (for red lines and noise) use the sum of 12 uniform draws minus 6, which caps them at ±6 standard deviations.
+
+## D-018 · Slice length
+
+"Day 0 to Day 90" is inclusive: the slice plays 91 daily ticks. The M1 hash test compares state after Day 90 completes.
+
+## D-019 · Crisis Time details
+
+Refines the spec's Crisis sub-ticks.
+
+- **When a province enters crisis:** at the start of a day, if its crisis flag is set, any crisis condition holds, or a timed event (one with an hour) is due there that day. So the Day 4 02:14 attack plays out hour by hour on Day 4, not from Day 5.
+- **What runs each hour:** besides the spec's phases 2, 5, 7 and 8, the orders phase (0) and timed events (1) also run. Player decisions in the Situation Room therefore take effect the next hour, and a 02:14 event lands in the 02:00 hour.
+- **Clearing:** every hour, a province in crisis either resets its stable-hour count (any condition still holds) or adds one. At the end of the day, provinces with 48 or more stable hours clear.
+- **Stepping hour by hour or day by day** gives identical results (tested).
+
+## D-020 · Next-state buffer
+
+- Every changing field is a double-buffered column.
+- A phase reads the committed value and writes the next value.
+- The scheduler commits after every phase, every hourly phase and every weekly or monthly system.
+- Code that updates the same entity twice in one phase must read its own pending write (`Pending`), not the committed value.
+
+## D-021 · Strict content
+
+- The YAML loader fails, naming the file and line, on any of these:
+  - a missing key
+  - an unknown key
+  - a malformed number
+  - a stored value (`Fixed`) with more than 4 decimals
+  - a `Fine` value with more than 8 decimals
+- Numbers are parsed from their text, never through floats.
+- **Why:** a typo in balance.yaml can't silently fall back to a default.
+
+## D-022 · Entity IDs
+
+- IDs are dense 32-bit indexes assigned in the order entities appear in the content files.
+- The state hash walks every store in ID order.
+
+## D-023 · Integer exp and σ
+
+- `exp` works internally at 18 decimals in 128-bit integers and rounds once to 8 decimals.
+- The input range is −25 to 25: below −25 the result is 0, and above 25 is an error.
+- σ returns exactly 0 or 1 beyond ±25.
+- Tests check both against the spec's worked numbers: detection 0.97 and 0.12, fab yield 0.88 at 780 days, and attribution confidence.
+
+## D-024 · State hash
+
+- The hash is 64-bit XxHash3.
+- It covers the scenario ID, the seed, the day and hour position, every store column, pending orders and scheduled events.
+- `cascade run` prints it every 30 days (spec: the desync check every 30 ticks).
