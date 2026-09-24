@@ -1,5 +1,7 @@
 using Cascade.Sim.Content;
 using Cascade.Sim.Core;
+using Cascade.Sim.Economy;
+using Cascade.Sim.Grid;
 using Cascade.Sim.World;
 
 namespace Cascade.Sim.Scheduling;
@@ -10,7 +12,9 @@ public sealed class SimulationOptions
     public Dictionary<PhaseId, IPhase> Phases { get; } = [];
     public List<IPeriodicSystem>? Weekly { get; set; }
     public List<IPeriodicSystem>? Monthly { get; set; }
+    /// <summary>Extra crisis signals, on top of the built-in ones unless <see cref="DefaultCrisisSignals"/> is false.</summary>
     public List<ICrisisSignal> CrisisSignals { get; } = [];
+    public bool DefaultCrisisSignals { get; set; } = true;
 }
 
 public enum StepResult
@@ -70,7 +74,8 @@ public sealed class Simulation
         Content = content;
         Seed = seed;
         Calendar = new Calendar(content.Scenario.StartDate);
-        World = new SimWorld(content.Scenario);
+        World = new SimWorld(content);
+        EconomySetup.Initialize(World, content);
 
         _ordersPhase = new OrdersPhase(Orders);
         _phases = new IPhase[12];
@@ -84,7 +89,8 @@ public sealed class Simulation
         }
         _weekly = (options.Weekly ?? DefaultWeekly()).ToArray();
         _monthly = (options.Monthly ?? DefaultMonthly()).ToArray();
-        _signals = options.CrisisSignals.ToArray();
+        _signals = (options.DefaultCrisisSignals ? [new GridCrisisSignal(content.Balance)] : Array.Empty<ICrisisSignal>())
+            .Concat(options.CrisisSignals).ToArray();
     }
 
     public static Simulation Create(string? contentDir = null, ulong? seed = null, SimulationOptions? options = null)
@@ -97,6 +103,10 @@ public sealed class Simulation
     {
         PhaseId.Orders => _ordersPhase,
         PhaseId.ScheduledEvents => new ScheduledEventsPhase(),
+        PhaseId.GridDispatch => new GridDispatchPhase(),
+        PhaseId.Production => new ProductionPhase(),
+        PhaseId.Logistics => new LogisticsPhase(),
+        PhaseId.Consumption => new ConsumptionPhase(Content.Balance),
         _ when HourlyPhases.Contains(id) => new StubHourlyPhase(id),
         _ => new StubPhase(id),
     };
@@ -111,6 +121,7 @@ public sealed class Simulation
         new StubSystem(SystemId.WeeklyThreatRecognition),
         new StubSystem(SystemId.WeeklyAiReplan),
         new StubSystem(SystemId.WeeklyForecast),
+        new CountermeasureSystem(),
     ];
 
     private static List<IPeriodicSystem> DefaultMonthly() =>

@@ -74,7 +74,11 @@ internal sealed class TraceSystem(SystemId id, Trace trace) : IPeriodicSystem
 internal sealed class SetCorruptionOrder(int issuer, int province, Fixed value) : Order(issuer)
 {
     public override string Kind => "test.set_corruption";
-    public override void Apply(TickContext ctx) => ctx.World.Provinces.Corruption.Set(province, value);
+    public override OrderOutcome Apply(TickContext ctx)
+    {
+        ctx.World.Provinces.Corruption.Set(province, value);
+        return OrderOutcome.Ok;
+    }
     protected override void HashFields(StateHasher h) => h.Add(province).Add(value);
 }
 

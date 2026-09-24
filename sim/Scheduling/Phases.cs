@@ -65,28 +65,31 @@ public sealed class OrdersPhase(OrderQueue queue) : IHourlyPhase
     private void ApplyAll(TickContext ctx)
     {
         foreach (var order in queue.Drain())
-        {
-            order.Apply(ctx);
-            Applied.Add(new AppliedOrder(ctx.Day, ctx.Hour, order));
-        }
+            Applied.Add(new AppliedOrder(ctx.Day, ctx.Hour, order, order.Apply(ctx)));
     }
 }
 
-/// <summary>An order and when it took effect, for replays and the event log.</summary>
-public sealed record AppliedOrder(int Day, int Hour, Order Order);
+/// <summary>An order, when it was applied and what happened, for replays and the event log.</summary>
+public sealed record AppliedOrder(int Day, int Hour, Order Order, OrderOutcome Outcome);
 
-/// <summary>Phase 1: applies scheduled events that are due. Timed events apply at their hour in a crisis day.</summary>
+/// <summary>
+/// Phase 1: applies scheduled events that are due, delivers shipments arriving today (spec: deliveries) and
+/// advances substation repairs. Timed events apply at their hour in a crisis day.
+/// </summary>
 public sealed class ScheduledEventsPhase : IHourlyPhase
 {
     public PhaseId Id => PhaseId.ScheduledEvents;
 
     public void RunDaily(TickContext ctx)
     {
+        Economy.LogisticsPhase.DeliverDue(ctx);
+        Grid.GridDispatchPhase.AdvanceRepairs(ctx, crisisProvinces: false);
         foreach (var e in ctx.Events.TakeDue(ctx.Day, hour: null)) e.Apply(ctx);
     }
 
     public void RunHourly(TickContext ctx)
     {
+        if (ctx.Hour == 0) Grid.GridDispatchPhase.AdvanceRepairs(ctx, crisisProvinces: true);
         foreach (var e in ctx.Events.TakeDue(ctx.Day, ctx.Hour)) e.Apply(ctx);
     }
 }

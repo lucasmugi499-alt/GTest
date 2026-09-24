@@ -18,7 +18,8 @@ public abstract class Order : IStateHashable
     /// <summary>Stable name for logs and hashing.</summary>
     public abstract string Kind { get; }
 
-    public abstract void Apply(TickContext ctx);
+    /// <summary>Carries out the order, or refuses it with a reason the player can read.</summary>
+    public abstract OrderOutcome Apply(TickContext ctx);
 
     /// <summary>Feed every field that affects <see cref="Apply"/>.</summary>
     protected abstract void HashFields(StateHasher h);
@@ -28,6 +29,13 @@ public abstract class Order : IStateHashable
         h.Add(Kind).Add(Seq).Add(Issuer);
         HashFields(h);
     }
+}
+
+/// <summary>What happened to an order: accepted, or refused with a reason.</summary>
+public readonly record struct OrderOutcome(bool Accepted, string? Reason)
+{
+    public static readonly OrderOutcome Ok = new(true, null);
+    public static OrderOutcome Refused(string reason) => new(false, reason);
 }
 
 public sealed class OrderQueue : IStateHashable
