@@ -252,6 +252,9 @@ public sealed class NarrativeStore : Store
     public Column<Fine> B { get; }
     public Column<Fine> R { get; }
     public Column<bool> Established { get; }
+    /// <summary>Counter-narrative Plausibility multiplier per [narrative × segments + segment], in force through PlausibilityUntil (D-045).</summary>
+    public Column<Fine> PlausibilityFactor { get; }
+    public Column<int> PlausibilityUntil { get; }
 
     public NarrativeStore(ScenarioDef s, SegmentStore segments, NationStore nations)
         : base("narrative", s.Society.Narratives.Select(n => n.Id).ToList())
@@ -281,8 +284,10 @@ public sealed class NarrativeStore : Store
         B = new Column<Fine>("narrative.b", Count * Segments);
         R = new Column<Fine>("narrative.r", Count * Segments);
         Established = new Column<bool>("narrative.established", Count * Segments);
+        PlausibilityFactor = new Column<Fine>("narrative.plausibility_factor", Count * Segments);
+        PlausibilityUntil = new Column<int>("narrative.plausibility_until", Count * Segments);
         for (int i = 0; i < Count; i++) { SeededDay.Init(i, -1); CounterUntil.Init(i, -1); RumorHours.Init(i, Fixed.FromInt(-1)); }
-        for (int i = 0; i < Count * Segments; i++) S.Init(i, Fine.One);
+        for (int i = 0; i < Count * Segments; i++) { S.Init(i, Fine.One); PlausibilityFactor.Init(i, Fine.One); PlausibilityUntil.Init(i, -1); }
     }
 
     public int At(int narrative, int segment) => narrative * Segments + segment;
@@ -290,13 +295,13 @@ public sealed class NarrativeStore : Store
     public override void Commit()
     {
         base.Commit();
-        S.Commit(); E.Commit(); B.Commit(); R.Commit(); Established.Commit();
+        S.Commit(); E.Commit(); B.Commit(); R.Commit(); Established.Commit(); PlausibilityFactor.Commit(); PlausibilityUntil.Commit();
     }
 
     public override void HashInto(StateHasher h)
     {
         base.HashInto(h);
-        h.Add(S).Add(E).Add(B).Add(R).Add(Established);
+        h.Add(S).Add(E).Add(B).Add(R).Add(Established).Add(PlausibilityFactor).Add(PlausibilityUntil);
     }
 }
 

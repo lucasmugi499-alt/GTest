@@ -227,7 +227,7 @@ public static class Effects
             }).ToList(),
             "nationalize" => [() => new NationalizeOrder(p, Key(w.Corporations, v))],
             "takedown" => Takedown(v, w, p),
-            "counter" => [() => new CounterNarrativeOrder(p, Id(w.Narratives, v))],
+            "counter" => Counter(v, w),
             "launch_cyber" => [() => new LaunchCyberOperationOrder(p, Id(w.Operations, v))],
             "open_import" => OpenImport(v, w, c),
             "doctrine" => [() => new SetDoctrineOrder(p, v.Fine())],
@@ -264,6 +264,19 @@ public static class Effects
         var pressure = m["pressure"].Fixed();
         var contract = m.Has("contract") ? m["contract"].Fixed() : Fixed.Zero;
         return [() => new TakedownOrder(p, n, pressure, contract)];
+    }
+
+    /// <summary>order.counter: a narrative id (every segment), or { narrative, segments: [..], live: true }.</summary>
+    private static List<Func<Order>> Counter(CValue v, SimWorld w)
+    {
+        int p = w.Nations.Player;
+        if (v is not CMap m) { int all = Id(w.Narratives, v); return [() => new CounterNarrativeOrder(p, all)]; }
+        m.Only("narrative", "segments", "live");
+        int n = Id(w.Narratives, m["narrative"]);
+        int mask = -1;
+        if (m.Has("segments")) { mask = 0; foreach (var x in m["segments"].Items) mask |= 1 << Id(w.Segments, x); }
+        bool live = m.Has("live") && m["live"].Bool();
+        return [() => new CounterNarrativeOrder(p, n, mask, live)];
     }
 
     private static List<Func<Order>> OpenImport(CValue v, SimWorld w, ContentSet c)

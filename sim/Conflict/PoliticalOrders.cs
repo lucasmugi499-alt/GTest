@@ -138,22 +138,38 @@ public sealed class TakedownOrder(int issuer, int narrative, Fixed pressure, Fix
     protected override void HashFields(StateHasher h) => h.Add(narrative).Add(pressure).Add(contract);
 }
 
-/// <summary>Counter-narrative: γ triples for 7 days. Going live only works while national Trust is above 50 (concept).</summary>
-public sealed class CounterNarrativeOrder(int issuer, int narrative) : Order(issuer)
+/// <summary>
+/// Counter-narrative (spec: γ triples for 7 days; D-045: Plausibility × 0.6 for 30 days in the target segments).
+/// The President live on TV cuts Plausibility harder (× 0.5) while national Trust is at least 50; below that it
+/// works like any other counter. Segments: a bit mask, -1 for every segment.
+/// </summary>
+public sealed class CounterNarrativeOrder(int issuer, int narrative, int segmentMask = -1, bool live = false) : Order(issuer)
 {
     public override string Kind => "info.counter";
 
     public override OrderOutcome Apply(TickContext ctx)
     {
         var w = ctx.World;
-        if (w.Politics.Trust[Issuer] <= ctx.Balance.Information.CounterMinTrust)
-            return OrderOutcome.Refused($"Trust is too low ({w.Politics.Trust[Issuer].ToString(1)}) for people to believe it.");
-        w.Narratives.CounterUntil.Set(narrative, ctx.Day + ctx.Balance.Information.CounterDays - 1);
-        w.Log.Add(ctx.Day, ctx.Hour, "information", $"The government answers \"{w.Narratives.Defs[narrative].Name}\" live.", w.Nations.Keys[Issuer]);
+        var info = ctx.Balance.Information;
+        var nar = w.Narratives;
+        bool trusted = w.Politics.Trust[Issuer] >= info.CounterMinTrust;
+        var factor = live && trusted ? info.CounterPlausibilityLive : info.CounterPlausibility;
+        nar.CounterUntil.Set(narrative, ctx.Day + info.CounterDays - 1);
+        int until = ctx.Day + info.CounterPlausibilityDays - 1;
+        for (int s = 0; s < nar.Segments; s++)
+        {
+            if ((segmentMask & (1 << s)) == 0) continue;
+            int at = nar.At(narrative, s);
+            nar.PlausibilityFactor.Set(at, factor);
+            nar.PlausibilityUntil.Set(at, until);
+        }
+        w.Log.Add(ctx.Day, ctx.Hour, "information", live
+            ? $"The government answers \"{nar.Defs[narrative].Name}\" live{(trusted ? "" : ", but trust is low and fewer people are convinced")}."
+            : $"The government answers \"{nar.Defs[narrative].Name}\".", w.Nations.Keys[Issuer]);
         return OrderOutcome.Ok;
     }
 
-    protected override void HashFields(StateHasher h) => h.Add(narrative);
+    protected override void HashFields(StateHasher h) => h.Add(narrative).Add(segmentMask).Add(live);
 }
 
 /// <summary>Prebunking: 1% of the targeted segments' susceptible people move to rejecting each day.</summary>

@@ -95,9 +95,25 @@ public class EconomyTests
     {
         var sim = TestContent.NewSim();
         int fab = Veyl.Facility(sim, "tessera_fab_3");
+        var f = sim.World.Facilities;
         sim.StepDay();
-        // 0.94 + 0.01 × (1 − 0.94) = 0.9406
-        Assert.Equal(Fixed.Parse("0.9406"), sim.World.Facilities.Efficiency[fab]);
+        // D-049: E + g (E_max − E) u with u = output ÷ capacity: 0.94 + 0.01 × 0.06 × u
+        var u = (f.RunToday[fab] / EconomyRules.EffectiveCapacity(sim.World, sim.Balance, fab)).ToFine();
+        Assert.True(u > Fine.Zero && u < Fine.One);
+        Assert.Equal(Fixed.Parse("0.94") + Fixed.Parse("0.0006").Times(u), f.Efficiency[fab]);
+    }
+
+    [Fact]
+    public void EfficiencyDoesNotGrowOnADarkDay()
+    {
+        var sim = TestContent.NewScenario();
+        int fab = Veyl.Facility(sim, "tessera_fab_3");
+        sim.RunThrough(4); // the Day 4 attack darkens the industrial substation
+        var f = sim.World.Facilities;
+        var before = f.Efficiency[fab];
+        sim.StepDay();
+        Assert.Equal(Fixed.Zero, f.RunToday[fab]);
+        Assert.Equal(before, f.Efficiency[fab]);
     }
 
     [Fact]

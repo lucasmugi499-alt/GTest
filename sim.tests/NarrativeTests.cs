@@ -273,8 +273,9 @@ public class NarrativeTests
         sim.StepDay();
         var w = sim.World;
         var n = sim.Balance.Narrative;
-        // Day 0: no crisis (K = 0), rung 2, two arc beats fired (odd logins, wreck) → A = 40.
-        var expected = n.TensionApproval * (Fixed.Hundred - w.Politics.Approval[0]) + n.TensionRung * 2 + n.TensionArcs * Fixed.FromInt(40);
+        // Day 0: no crisis (K = 0), rung 2, one arc beat that raises the stakes (the wreck; the Day 0 paperwork
+        // cards have intensity 0 and don't count, D-048) → A = 20.
+        var expected = n.TensionApproval * (Fixed.Hundred - w.Politics.Approval[0]) + n.TensionRung * 2 + n.TensionArcs * Fixed.FromInt(20);
         Assert.Equal(expected, w.Director.Tension[0]);
     }
 

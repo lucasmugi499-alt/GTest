@@ -15,31 +15,116 @@ storylets:
 
   # ---------------------------------------------------------------- The Veyl arc (concept: Sample scenario 1)
 
+  # Day 0 routine paperwork (D-048). The forensic sweep card sits among these, worded as plainly as they are, and
+  # all of them draw on the same Political Capital the Day 4 and Day 10 decisions need. All expire at the end of Day 2.
+
+  - id: stock_targets
+    arc: veyl
+    tier: minor
+    weight: 1
+    intensity: 0
+    cooldown_days: 3650
+    expires_days: 2
+    default: keep
+    title: "Stock targets for the spring"
+    text: >
+      {minister} proposes raising the national stock targets before spring maintenance season, buying ahead at
+      today's prices.
+    preconditions: [ "day <= 2" ]
+    roles:
+      minister: { role: minister, portfolio: finance }
+    choices:
+      - id: raise
+        text: "Raise the stock targets."
+        hint: "20 Political Capital. Stockpiles build toward about 55 days of cover."
+        requires: [ "pc >= 20" ]
+        effects: { pc: -20, order.doctrine: 0.58 }
+        memories: { minister: 10 }
+      - id: keep
+        text: "Keep the current targets."
+        hint: ""
+        effects: {}
+
+  - id: fab_wage_talks
+    arc: veyl
+    tier: minor
+    weight: 1
+    intensity: 0
+    cooldown_days: 3650
+    expires_days: 2
+    default: stay_out
+    title: "Wage talks at Tessera"
+    text: >
+      Wage talks at the Tessera fabs have stalled. {worker} asks the government to broker a deal; {ceo} would rather it
+      stayed out.
+    preconditions: [ "day <= 2" ]
+    roles:
+      worker: { role: citizen, portfolio: industry }
+      ceo: { role: ceo, portfolio: chips }
+    choices:
+      - id: broker
+        text: "Broker a settlement."
+        hint: "20 Political Capital. Labour approves."
+        requires: [ "pc >= 20" ]
+        effects: { pc: -20, faction.labour: 6 }
+        memories: { worker: 15, ceo: -5 }
+      - id: stay_out
+        text: "Leave it to the company."
+        hint: ""
+        effects: { faction.labour: -3 }
+        memories: { worker: -10 }
+
   - id: odd_logins
     arc: veyl
     tier: minor
     weight: 1
-    intensity: 0.1
+    intensity: 0
     cooldown_days: 3650
     expires_days: 2
     default: ignore
-    title: "Odd logins at an eastern substation"
+    title: "Network ticket: Ossen East"
     text: >
-      {engineer} flags a handful of odd logins on the control network at an Ossen substation, weeks old. Probably a
-      contractor's misconfigured laptop. A full forensic sweep would take the network team off other work.
+      {engineer}: the Ossen East grid control network logged some unusual logins last month, most likely a contractor's
+      laptop set up wrong. A full forensic sweep would tie up the network team for a few days.
     preconditions: [ "day <= 2", "op.varan_eastern_grid.state == 0" ]
     roles:
       engineer: { role: engineer, portfolio: grid }
     choices:
       - id: sweep
-        text: "Order a forensic sweep of Ossen East's grid control systems."
+        text: "Order a forensic sweep of the network."
         hint: "15 Political Capital."
         requires: [ "pc >= 15" ]
         effects: { order.forensic_sweep: kestria_east_ossen }
         memories: { engineer: 10 }
       - id: ignore
-        text: "Note it and move on."
-        hint: "Most players do."
+        text: "Log the ticket."
+        hint: ""
+        effects: {}
+
+  - id: readiness_briefing
+    arc: veyl
+    tier: minor
+    weight: 1
+    intensity: 0
+    cooldown_days: 3650
+    expires_days: 2
+    default: skip
+    title: "Readiness campaign"
+    text: >
+      {journalist} reports that the government's public readiness adverts end this week. Extending them would cost
+      goodwill in the budget committee.
+    preconditions: [ "day <= 2" ]
+    roles:
+      journalist: { role: journalist }
+    choices:
+      - id: extend
+        text: "Extend the campaign."
+        hint: "10 Political Capital. Trust +2."
+        requires: [ "pc >= 10" ]
+        effects: { pc: -10, trust: 2 }
+      - id: skip
+        text: "Let it end."
+        hint: ""
         effects: {}
 
   - id: wreck_at_veyl
@@ -200,8 +285,8 @@ storylets:
         memories: { ceo: 5, president: -5 }
       - id: go_live
         text: "Put the President live on television."
-        hint: "Triples how fast belief fades for a week. Only works while trust is above 50%."
-        effects: { order.counter: president_fled }
+        hint: "Fewer people who see the video believe it, for a month: half as many while trust is 50% or more. Belief fades faster for a week."
+        effects: { order.counter: { narrative: president_fled, live: true } }
         memories: { president: 15 }
 
   - id: the_squeeze
@@ -524,7 +609,7 @@ storylets:
     tier: minor
     weight: 1
     intensity: 0.2
-    cooldown_days: 45
+    cooldown_days: 90     # D-047: at most once in the slice
     expires_days: 3
     default: ignore
     title: "Bond market jitters"
@@ -575,7 +660,7 @@ storylets:
     tier: minor
     weight: 1
     intensity: -0.3
-    cooldown_days: 30
+    cooldown_days: 90     # D-047: at most once in the slice
     expires_days: 5
     default: dismiss
     title: "A sunset clause"
@@ -600,7 +685,7 @@ storylets:
     tier: minor
     weight: 1
     intensity: -0.2
-    cooldown_days: 45
+    cooldown_days: 90     # D-047: at most once in the slice
     expires_days: 3
     default: decline
     title: "The shipping lines"
@@ -676,7 +761,7 @@ storylets:
     tier: minor
     weight: 1
     intensity: 0.2
-    cooldown_days: 45
+    cooldown_days: 90     # D-047: at most once in the slice
     expires_days: 3
     default: market
     title: "Magnet hoarding"
@@ -700,7 +785,7 @@ storylets:
     tier: minor
     weight: 1
     intensity: -0.3
-    cooldown_days: 45
+    cooldown_days: 90     # D-047: at most once in the slice
     expires_days: 3
     default: stay
     title: "Veyl is afraid"
@@ -725,7 +810,7 @@ storylets:
     tier: minor
     weight: 1
     intensity: -0.2
-    cooldown_days: 45
+    cooldown_days: 90     # D-047: at most once in the slice
     expires_days: 4
     default: later
     title: "A firmware patch"

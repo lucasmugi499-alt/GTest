@@ -114,10 +114,12 @@ public sealed class ProductionPhase : IPhase
         }
         f.RunToday.Set(i, q);
 
-        // Spec Efficiency: E_{t+1} = E_t + g (E_max − E_t).
+        // Spec Efficiency: E_{t+1} = E_t + g (E_max − E_t) u, where u = output ÷ capacity (D-049: a line learns only
+        // while it produces; an idle or dark day teaches nothing).
         var eMax = f.DualUse[i] ? b.Economy.EfficiencyMaxDualUse : b.Economy.EfficiencyMax;
         var eNow = f.Efficiency[i];
-        f.Efficiency.Set(i, eNow + b.Economy.EfficiencyGrowthPerDay * (eMax - eNow));
+        var utilization = capacity > Fixed.Zero ? Fine.Min(Fine.One, (q / capacity).ToFine()) : Fine.Zero;
+        f.Efficiency.Set(i, eNow + (b.Economy.EfficiencyGrowthPerDay * (eMax - eNow)).Times(utilization));
     }
 
     /// <summary>

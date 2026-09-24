@@ -206,16 +206,47 @@ public class SocietyTests
         Assert.True(Peak(counter: true) < Peak(counter: false));
     }
 
-    [Fact]
-    public void CounterNarrativeNeedsTrustAbove50()
+    [Theory]
+    [InlineData(40, true, "0.6")]   // live TV with low trust works like any counter
+    [InlineData(70, true, "0.5")]   // live TV at Trust 50+ cuts Plausibility harder
+    [InlineData(70, false, "0.6")]
+    public void CounterNarrativeCutsPlausibilityInTargetSegments(int trust, bool live, string factor)
     {
+        // D-045: Plausibility × 0.6 for 30 days in the targeted segments; × 0.5 for the President live at Trust 50+.
         var sim = TestContent.NewScenario();
-        foreach (var s in Enumerable.Range(0, sim.World.Segments.Count))
-            sim.World.Segments.TrustBase.Init(s, Fixed.FromInt(40));
+        var w = sim.World;
+        foreach (var s in Enumerable.Range(0, w.Segments.Count)) w.Segments.TrustBase.Init(s, Fixed.FromInt(trust));
         sim.RunThrough(4);
-        sim.Orders.Enqueue(new CounterNarrativeOrder(0, sim.World.Narratives.IdOf("president_fled")));
+        int n = w.Narratives.IdOf("president_fled");
+        sim.Orders.Enqueue(new CounterNarrativeOrder(0, n, segmentMask: 1 << 0, live: live));
         sim.StepDay();
-        Assert.False(sim.AppliedOrders[^1].Outcome.Accepted);
+        Assert.True(sim.AppliedOrders[^1].Outcome.Accepted);
+        Assert.Equal(Fine.Parse(factor), w.Narratives.PlausibilityFactor[w.Narratives.At(n, 0)]);
+        Assert.Equal(5 + 29, w.Narratives.PlausibilityUntil[w.Narratives.At(n, 0)]);
+        Assert.Equal(-1, w.Narratives.PlausibilityUntil[w.Narratives.At(n, 1)]); // not targeted
+    }
+
+    [Fact]
+    public void ViralityDecaysAfterRelease()
+    {
+        // D-045: a narrative held off burns out. With no spread for 30 days (every segment shut off), the late release of
+        // contact finds a far weaker narrative than an immediate one.
+        static Fine BeliefAfter(int heldDays)
+        {
+            var sim = TestContent.NewScenario();
+            var w = sim.World;
+            sim.RunThrough(3);
+            var p = w.Provinces;
+            for (int i = 0; i < p.Count; i++) p.InternetShutdown.Init(i, true);
+            sim.RunThrough(3 + heldDays);
+            for (int i = 0; i < p.Count; i++) p.InternetShutdown.Init(i, false);
+            sim.RunThrough(3 + heldDays + 30);
+            int n = w.Narratives.IdOf("president_fled");
+            var max = Fine.Zero;
+            for (int s = 0; s < w.Narratives.Segments; s++) max = Fine.Max(max, w.Narratives.B[w.Narratives.At(n, s)]);
+            return max;
+        }
+        Assert.True(BeliefAfter(30) < BeliefAfter(1) / 2);
     }
 
     [Fact]

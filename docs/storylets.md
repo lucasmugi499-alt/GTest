@@ -112,7 +112,7 @@ These carry out an order immediately, exactly as the player could give it. A ref
 | `order.power: [power or { power, province }]` | Use an emergency power |
 | `order.nationalize: corporation` | Nationalize a company |
 | `order.takedown: { narrative, pressure, contract }` | Ask the platform to take a narrative down |
-| `order.counter: narrative` | Counter a narrative |
+| `order.counter: narrative` or `{ narrative, segments: [..], live: true }` | Counter a narrative: belief fades 3× faster for 7 days, and Plausibility × 0.6 for 30 days in the target segments (all if omitted). `live: true` is the President on TV: × 0.5 while Trust is 50+ (D-045) |
 | `order.launch_cyber: operation` | Use a cyber operation |
 | `order.open_import: { good, from }` | Open an import route |
 | `order.doctrine: j` | Set stockpile doctrine |

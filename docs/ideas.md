@@ -28,6 +28,11 @@ These came from the original slice brief:
 
 ## Found during the M6 balance pass
 
-- **Narrative ceiling:** in the spec's model nearly everyone is exposed eventually and a Plausibility share believe, so belief settles at about 40% whatever the counter-measure; counters only delay tipping. Options: a counter-narrative that lowers Plausibility, prebunking that also protects the exposed, or Virality that decays with days since release. Needs a design call (D-043).
 - **Varan's ±1 day jitter:** would also spread out the storylet-share metric.
-- **Storylet pool size:** the spec's "no storylet above 2% of firings" needs at least about 60 storylets in the pool.
+- **Storylet pool size:** the spec's "no storylet above 2% of firings" needs at least about 60 storylets; until then the batch caps generics at twice the even share (D-047).
+
+## For the next slice
+
+- **Varan's front logistics:** Varan's front supply and drones are unconstrained in this slice (D-037). Give the AI the same diesel, drone stock and kill-zone truck losses as the player.
+- **Grid rerouting:** loads hang off one substation each, so a damaged substation can't be routed around. Meshed feeders would let damage become the chronic problem D-046 describes instead of a blackout.
+- **A dominant free answer:** going live costs nothing and, at Trust 50+, beats every other deepfake response (D-045). Give it a cost or a risk (a gaffe storylet, a Trust hit if belief tips anyway).

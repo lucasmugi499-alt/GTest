@@ -75,12 +75,14 @@ public sealed record SocietyBalance(
 public sealed record InformationBalance(
     Fine Beta, Fine Eta, Fine Gamma, Fine GammaEstablished, Fine EstablishedShare, Fixed TrustDivisor,
     Fixed CounterGammaMultiplier, int CounterDays, Fixed CounterMinTrust, Fine PrebunkingPerDay, Fixed PrebunkingCost,
-    Fine TakedownWeight, Fixed TakedownComplianceCost, int RumorCrisisHours, int RumorHorizonHours, int RumorHourlyHorizonHours)
+    Fine TakedownWeight, Fixed TakedownComplianceCost, int RumorCrisisHours, int RumorHorizonHours, int RumorHourlyHorizonHours,
+    Fine CounterPlausibility, Fine CounterPlausibilityLive, int CounterPlausibilityDays, Fine ViralityDecayPerDay)
 {
     public static InformationBalance Read(ContentNode n) => new(
         n.Fine("beta"), n.Fine("eta"), n.Fine("gamma"), n.Fine("gamma_established"), n.Fine("established_share"), n.Fixed("trust_divisor"),
         n.Fixed("counter_gamma_multiplier"), n.Int("counter_days"), n.Fixed("counter_min_trust"), n.Fine("prebunking_per_day"), n.Fixed("prebunking_cost"),
-        n.Fine("takedown_weight"), n.Fixed("takedown_compliance_cost"), n.Int("rumor_crisis_hours"), n.Int("rumor_horizon_hours"), n.Int("rumor_hourly_horizon_hours"));
+        n.Fine("takedown_weight"), n.Fixed("takedown_compliance_cost"), n.Int("rumor_crisis_hours"), n.Int("rumor_horizon_hours"), n.Int("rumor_hourly_horizon_hours"),
+        n.Fine("counter_plausibility"), n.Fine("counter_plausibility_live"), n.Int("counter_plausibility_days"), n.Fine("virality_decay_per_day"));
 }
 
 public sealed record CyberBalance(

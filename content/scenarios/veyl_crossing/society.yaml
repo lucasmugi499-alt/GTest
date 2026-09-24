@@ -86,7 +86,7 @@ narratives:
   - id: president_fled
     name: "Deepfake: the President flees the capital"
     origin: varan
-    virality: 20               # D-038: the spec's η caps how fast belief can form; this tips about 5 days after release (M6)
+    virality: 40               # D-045: with decay 0.3/day, left alone it tips about 4 days after release and ends near 40%; a response that holds it off lets it burn out
     plausibility: 0.6
     resonance: { eastern: 1.4, industrial: 1.2, border: 1.3, rural: 1.1, heartland: 1.0, urban: 0.7, tech: 0.6, coastal: 0.9, older: 1.2 }
     align_hit: 35
@@ -95,7 +95,7 @@ narratives:
   - id: blackout_incompetence
     name: "Varan line: Kestria's grid failed on its own"
     origin: varan
-    virality: 15
+    virality: 30               # D-045: raised from 15 so it still takes hold as often under virality decay
     plausibility: 0.5
     resonance: { eastern: 1.3, industrial: 1.2, border: 1.0, rural: 1.0, urban: 0.8, tech: 0.7, coastal: 0.9, older: 1.0, heartland: 1.0 }
     align_hit: 15

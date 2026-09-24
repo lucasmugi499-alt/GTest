@@ -9,7 +9,7 @@ namespace Cascade.Sim.Conflict;
 /// Phase 8 (spec Narrative spread). Per narrative and segment, shares S (susceptible), E (exposed), B (believing),
 /// R (rejecting) move as:
 ///   new exposed = β V R_s (1 − T_s/150) S_s Σ w_ss' B_s'
-///   dE = new exposed − η E;  dB = η Pl E − γ B;  exposed non-believers → R at η (1 − Pl); fading believers → R.
+///   dE = new exposed − η E;  dB = η Pl E − γ B  (V decays with age, Pl cut by counter-narratives: D-045);  exposed non-believers → R at η (1 − Pl); fading believers → R.
 /// Steps are daily, or hourly on a day when any segment's province is in Crisis Time (D-038).
 /// Past 25% belief a segment is "established": γ drops to 0.005 and factions react once.
 /// </summary>
@@ -91,7 +91,10 @@ public static class Information
             if (only >= 0 && n != only) continue;
             if (!nar.Active[n]) continue;
             var def = nar.Defs[n];
-            var virality = def.Virality.ToFine() * ViralityMultiplier(w, c, nar.Origin[n]);
+            // D-045: Virality decays with days since release, so a narrative held off long enough burns out.
+            var age = nar.SeededDay[n] >= 0 ? Math.Max(0, day - nar.SeededDay[n]) : 0;
+            var decay = FixedMath.Exp(-(info.ViralityDecayPerDay * age));
+            var virality = def.Virality.ToFine() * ViralityMultiplier(w, c, nar.Origin[n]) * decay;
             bool counter = nar.CounterUntil[n] >= day;
 
             var bNow = new Fine[segs];
@@ -111,7 +114,9 @@ public static class Information
                 var newE = Fine.Min(sS, info.Beta * virality * nar.Resonance[at] * trustFactor * sS * force * dt);
                 var prebunk = (nar.PrebunkMask[n] & (1 << s)) != 0 ? Fine.Min(sS - newE, info.PrebunkingPerDay * sS * dt) : Fine.Zero;
                 var leaveE = Fine.Min(sE, info.Eta * sE * dt);
-                var toB = leaveE * def.Plausibility;
+                // D-045: a counter-narrative cuts Plausibility in its target segments for a while.
+                var pl = nar.PlausibilityUntil[at] >= day ? def.Plausibility * nar.PlausibilityFactor[at] : def.Plausibility;
+                var toB = leaveE * pl;
                 var toR = leaveE - toB;
                 var gamma = nar.Established[at] ? info.GammaEstablished : info.Gamma;
                 if (counter) gamma = gamma * b.Information.CounterGammaMultiplier.ToFine();
@@ -190,13 +195,21 @@ public static class Information
             if (anyOpen)
             {
                 var hour = Fine.Ratio(1, 24);
+                var lastPeak = Fine.Zero;
                 for (int h = 1; h <= horizonHours && hours < 0; h++)
                 {
                     Step(w, ctx.Balance, ctx.Content, ctx.Day + h / 24, hour, write: false, S, E, B, R, only: n);
                     for (int s = 0; s < nar.Segments; s++)
                         if (!done[s] && B[nar.At(n, s)] >= info.EstablishedShare) { hours = h; break; }
-                    // Stop early once belief is falling everywhere.
-                    if (h % 24 == 0 && Enumerable.Range(0, nar.Segments).All(s => E[nar.At(n, s)] < Fine.Ratio(1, 100_000))) break;
+                    // Stop early once belief in the open segments stops rising: Virality only decays (D-045), so it
+                    // can't climb back.
+                    if (h % 24 == 0)
+                    {
+                        var peak = Fine.Zero;
+                        for (int s = 0; s < nar.Segments; s++) if (!done[s]) peak = Fine.Max(peak, B[nar.At(n, s)]);
+                        if (peak <= lastPeak) break;
+                        lastPeak = peak;
+                    }
                 }
             }
             nar.RumorHours.Set(n, Fixed.FromInt(hours));

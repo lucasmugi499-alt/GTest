@@ -73,7 +73,9 @@ public sealed class DirectorPhase : IHourlyPhase
         for (int p = 0; p < w.Provinces.Count; p++)
             if (w.Provinces.Owner[p] == player) { provinces++; if (w.Provinces.InCrisis[p]) crisis++; }
         var k = provinces == 0 ? Fixed.Zero : Fixed.Ratio(100L * crisis, provinces);
-        int beats = w.Storylets.Instances.Count(i => ctx.Narrative.Def.Storylets[i.Storylet].Arc is not null && ctx.Day - i.Day < n.ArcIntensityWindowDays);
+        // Arc beats that raise the stakes (intensity above 0); routine paperwork beats don't (D-048).
+        int beats = w.Storylets.Instances.Count(i => ctx.Narrative.Def.Storylets[i.Storylet] is { Arc: not null } s
+            && s.Intensity > Fine.Zero && ctx.Day - i.Day < n.ArcIntensityWindowDays);
         var a = Fixed.Min(Fixed.Hundred, n.ArcIntensityPerBeat * beats);
         var rung = Escalation.HighestRung(w, ctx.Balance, player);
         var t = n.TensionCrisis * k + n.TensionApproval * (Fixed.Hundred - w.Politics.Approval[player]) + n.TensionRung * rung + n.TensionArcs * a;

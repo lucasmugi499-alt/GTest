@@ -319,7 +319,7 @@ All of these are in `balance.yaml` under `society`.
   - The spec's η = 0.5 per day caps how fast exposed people become believers: at most about 30% of the exposed a day.
   - So no Virality can make a deepfake tip in the concept's "about five hours".
 - **What was done:**
-  - The spec's formulas are kept, and the deepfake's Virality is 20 (lowered from 50 in M6, see D-043), so left alone it tips about 5 days after release (Day 4, 06:00), around Day 9.
+  - The spec's formulas are kept. Virality is now 40 with a decay of 30% a day (D-045); left alone the deepfake tips around Day 8.
   - Rumor Velocity reports that forecast.
 - **Hourly steps:** when any segment's province is in Crisis Time, every narrative steps hourly that day (the model couples all segments).
 
@@ -416,7 +416,7 @@ These changes were made after running 1,000 seeds with random choices.
   - In the spec's model nearly every susceptible person is exposed in the end, and a Plausibility share of them (0.6 here) come to believe. After γ's slow fade, belief settles at about 40% whatever the counter-measure. Counters only delay the tipping point.
   - At 50 it tipped within a day or two of any counter, so choosing one felt meaningless.
   - At 20, the four options spread out. Left alone, it tips around Day 9. Going live also tips it around Day 9. A takedown delays it to about Day 11, and a shutdown to about Day 13.
-  - This is a finding for the designer, not a fix. See ideas.md.
+  - Superseded by D-045: virality decay and a Plausibility cut now make counter-measures change the outcome.
 - **Storylet repetition:**
   - `generator_fuel` and `towers_dark` have their intensity lowered by 0.2.
   - Cooldown is 45 days for `design_bureau_patch`, `border_town_fear`, `bond_jitters`, `magnet_hoarding` and `shipping_guarantee`.
@@ -462,3 +462,59 @@ A full review of the sim, content, tools and game. What changed:
   - Crisis Time stays on while any substation runs below 70%, so a province waiting on a new transformer stays in Crisis Time until Day 90 (the spec's rule taken literally).
   - Efficiency grows on idle days (the spec's formula as written).
   - Varan's front supply and drones are unconstrained (D-037).
+
+## D-045 · Counter-measures change the deepfake's outcome
+
+Asked for after the audit: doing nothing should end near 40% belief, the best response under 15%.
+
+- **Virality decays after release:** V × e^(−k × days since release).
+  - Tuning started at k = 0.05 as suggested. At 0.05 to 0.15, every response still saturated.
+  - The model is explosive: any belief that leaks into a connected segment eventually saturates it unless virality falls faster than the spread grows. So a response that holds the narrative off matters only if the decay is fast enough.
+  - Settled on k = 0.3 a day with the deepfake's Virality raised from 20 to 40.
+  - "Blackout incompetence" (Varan's reactive influence campaign) goes from 15 to 30, so it still takes hold about as often: 21 of 30 seeded campaigns, against 22 before.
+- **Counter-narratives cut Plausibility:** Plausibility × 0.6 for 30 days in the targeted segments.
+  - This is on top of the spec's "γ triples for 7 days".
+  - The President live on TV gets × 0.5 while national Trust is 50 or more. Below 50 it works like any counter, where before it was refused.
+  - `order.counter` takes `{ narrative, segments, live }`.
+- **Result** (200 campaigns each, highest believing share of any segment on Day 90):
+
+  | Response | Belief on Day 90 | Campaigns where it tips |
+  | --- | --- | --- |
+  | Nothing | 39.8% | 200 |
+  | Takedown | 35.8% | 200 |
+  | Shutdown in Ossen East | 14.9% | 109 |
+  | President live on TV | 5.5% | 0 |
+
+- **Known issue:** going live is free and now dominant. See ideas.md.
+- **Forecast early stop:** the Rumor Velocity forecast stops once belief stops rising, since virality only decays. Without it, a narrative that burns out forced the full 720-hour forecast every day.
+
+## D-046 · Crisis Time follows actual blackout
+
+- The grid crisis signal is now: any load (grid node) served less than 70% of its demand.
+- A substation below 70% capacity no longer counts on its own, and neither does the collapsed flag. A collapsed region's loads are under-served anyway.
+- Damage whose loads are still served is a chronic problem that the Cascade view shows.
+- **Limit of the slice's grid:** each load hangs off one substation, so damage can't be routed around. A substation on a 30% mobile unit still under-serves its loads, and that province stays in crisis.
+- **Result:** 55.5% of days have a Kestrian province in Crisis Time, against 53.1% under the old rule. The designer expected 15–25%.
+  - Under the new rule Ossen East is in real blackout: its loads are under 70% on 870 of 1,820 campaign-days (20 seeds).
+  - Because damage can't be routed around, the third wrecked substation's loads sit at 30% until Day 90.
+  - For comparison, a "new or worsening" rule would give about 8.5% before the 48-hour clearing time: a shortfall counts as crisis only within 3 days of a node dropping below 70% or dropping further. The design call is open.
+
+## D-047 · Storylet share check
+
+- 2% stays the long-term target.
+- Scenario-arc storylets are left out of the check; they fire every game by design.
+- Until the library passes 60 storylets, generic storylets are capped at twice the even share of generic fires. Settings: `narrative.storylet_*` in balance.yaml.
+- To meet the cap, six generic storylets fire at most once in the slice (cooldown 90 days): `design_bureau_patch`, `border_town_fear`, `bond_jitters`, `shipping_guarantee`, `magnet_hoarding` and `sunset_petition`. The top share is then 10.6% on 200 campaigns, against a cap of 11.1%.
+
+## D-048 · The forensic sweep card is easy to miss by presentation
+
+- The card is now "Network ticket: Ossen East", worded plainly, with intensity 0. It no longer carries the "Most players do." hint.
+- It arrives on Day 0 with three routine cards: stock targets (20 PC), Tessera wage talks (20 PC) and the readiness campaign (10 PC).
+- All four expire at the end of Day 2, and they draw on the same Political Capital the Day 4 and Day 10 decisions need.
+- Arc beats with intensity 0 don't add to the Director's arc intensity A, so routine paperwork doesn't raise Tension.
+- How findable the card is gets judged in human playtests (target: a quarter to a third of first-time players), not by random play.
+
+## D-049 · Efficiency grows only while a line produces
+
+- E_{t+1} = E_t + g (E_max − E_t) × u, where u = output ÷ capacity (0 to 1).
+- An idle or dark day teaches nothing.

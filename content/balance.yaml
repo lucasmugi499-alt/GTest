@@ -56,7 +56,7 @@ fab:
 
 # Spec Grid and blackouts.
 grid:
-  crisis_below_ratio: 0.70         # spec Crisis sub-ticks: any grid node below 70%
+  crisis_below_ratio: 0.70         # D-046: crisis while any node is served under 70% of its demand
   spare_repair_days: 14
   mobile_unit_days: 7
   mobile_unit_capacity: 0.3
@@ -167,7 +167,11 @@ information:
   trust_divisor: 150
   counter_gamma_multiplier: 3
   counter_days: 7
-  counter_min_trust: 50           # concept: going live on TV only works while trust is above 50%
+  counter_min_trust: 50           # D-045: the live-TV counter gets the stronger Plausibility cut at Trust 50+
+  counter_plausibility: 0.6       # D-045: a counter-narrative multiplies Plausibility by this in its target segments
+  counter_plausibility_live: 0.5  # D-045: the President live on TV, while Trust is at least counter_min_trust
+  counter_plausibility_days: 30
+  virality_decay_per_day: 0.3     # D-045: Virality × e^(−k × days since release); a narrative held off burns out
   prebunking_per_day: 0.01
   prebunking_cost: 5              # D-036: Political Capital to start prebunking a narrative
   takedown_weight: 0.3
@@ -312,6 +316,11 @@ narrative:
   majors_per_week: 1
   minors_per_week: 3
   crisis_major_hours: 12
+  # Batch check (D-047): no generic storylet above 2× the even share of generic fires until the library passes
+  # storylet_cap_library_size storylets; then the spec's 2%. Arc beats fire every game by design and are left out.
+  storylet_share_cap: 0.02
+  storylet_even_share_multiple: 2
+  storylet_cap_library_size: 60
 
 # The Chronicle's verdict scores, 0-100 each (D-041).
 chronicle:

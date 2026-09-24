@@ -233,17 +233,18 @@ public sealed class GridDispatchPhase : IHourlyPhase
     }
 }
 
-/// <summary>Spec Crisis sub-ticks: a province is in crisis while any grid node is below 70% or its grid has collapsed.</summary>
+/// <summary>
+/// Spec Crisis sub-ticks, read as actual blackout (D-046): a province is in crisis while any load (grid node) is served
+/// less than 70% of its demand. A damaged substation whose loads are still served doesn't count on its own; that
+/// chronic damage shows in the Cascade view instead.
+/// </summary>
 public sealed class GridCrisisSignal(Balance balance) : ICrisisSignal
 {
     public string Name => "grid";
 
     public bool IsUnstable(SimWorld w, int province)
     {
-        if (w.Provinces.Collapsed[province]) return true;
         var threshold = balance.Grid.CrisisBelowRatio;
-        for (int s = 0; s < w.Substations.Count; s++)
-            if (w.Substations.Province[s] == province && w.Substations.CapacityFactor(s, balance.Grid) < threshold) return true;
         for (int l = 0; l < w.Loads.Count; l++)
             if (w.Loads.Province[l] == province && w.Loads.ServedLast[l] < threshold) return true;
         return false;

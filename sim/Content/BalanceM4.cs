@@ -12,7 +12,8 @@ public sealed record NarrativeBalance(
     Fixed TensionCrisis, Fixed TensionApproval, Fixed TensionRung, Fixed TensionArcs, Fixed ArcIntensityPerBeat, int ArcIntensityWindowDays,
     string Director, IReadOnlyDictionary<string, DirectorPersonality> Directors,
     Fixed UtilityTension, Fixed UtilityPacing, Fixed UtilityDebt, Fixed UtilityRepeat, Fixed UtilityBase, Fixed UtilityMin,
-    int RepeatWindowDays, int TopChoices, int MajorsPerWeek, int MinorsPerWeek, int CrisisMajorHours)
+    int RepeatWindowDays, int TopChoices, int MajorsPerWeek, int MinorsPerWeek, int CrisisMajorHours,
+    Fixed StoryletShareCap, Fixed StoryletEvenShareMultiple, int StoryletCapLibrarySize)
 {
     public DirectorPersonality Personality => Directors.TryGetValue(Director, out var p) ? p
         : throw new ContentException($"Unknown director '{Director}' (balance.yaml narrative.directors).");
@@ -35,7 +36,8 @@ public sealed record NarrativeBalance(
             n.Str("director"), dirs,
             n.Fixed("utility_tension"), n.Fixed("utility_pacing"), n.Fixed("utility_debt"), n.Fixed("utility_repeat"),
             n.Fixed("utility_base"), n.Fixed("utility_min"),
-            n.Int("repeat_window_days"), n.Int("top_choices"), n.Int("majors_per_week"), n.Int("minors_per_week"), n.Int("crisis_major_hours"));
+            n.Int("repeat_window_days"), n.Int("top_choices"), n.Int("majors_per_week"), n.Int("minors_per_week"), n.Int("crisis_major_hours"),
+            n.Fixed("storylet_share_cap"), n.Fixed("storylet_even_share_multiple"), n.Int("storylet_cap_library_size"));
         _ = b.Personality;
         return b;
     }

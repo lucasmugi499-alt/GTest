@@ -164,7 +164,15 @@ static class Batch
         var allFires = runs.SelectMany(r => r.Fires).GroupBy(kv => kv.Key).ToDictionary(g => g.Key, g => g.Sum(kv => kv.Value));
         int totalFires = allFires.Values.Sum();
         var never = library.Where(s => !allFires.ContainsKey(s.Id)).Select(s => s.Id).ToList();
-        var top = allFires.OrderByDescending(kv => kv.Value).First();
+        // D-047: arc beats fire every game by design and are left out; generics are capped at twice the even share
+        // until the library passes the balance's size, then at the spec's 2%.
+        var generic = library.Where(s => s.Arc is null).Select(s => s.Id).ToHashSet();
+        var genericFires = allFires.Where(kv => generic.Contains(kv.Key)).ToList();
+        int totalGeneric = genericFires.Sum(kv => kv.Value);
+        var top = genericFires.OrderByDescending(kv => kv.Value).First();
+        var check = content.Balance.Narrative;
+        double cap = library.Count > check.StoryletCapLibrarySize ? check.StoryletShareCap.ToDoubleForUi()
+            : check.StoryletEvenShareMultiple.ToDoubleForUi() / generic.Count;
 
         ticks.Sort();
         double Pct(double q) => ticks.Count == 0 ? 0 : ticks[Math.Min(ticks.Count - 1, (int)Math.Ceiling(q * ticks.Count) - 1)];
@@ -180,8 +188,10 @@ static class Batch
         b.AppendLine("| --- | --- | --- | --- |");
         Row("Storylets that never fire", "under 5% of the library", $"{never.Count} of {library.Count} ({P((double)never.Count / library.Count)}){(never.Count > 0 ? ": " + string.Join(", ", never) : "")}",
             (double)never.Count / library.Count < 0.05 ? "PASS" : "FAIL");
-        Row("Any one storylet's share of all fires", "under 2%", $"{top.Key}: {P((double)top.Value / totalFires)}",
-            (double)top.Value / totalFires < 0.02 ? "PASS" : "FAIL — see note 1");
+        double topShare = (double)top.Value / totalGeneric;
+        Row("Any one generic storylet's share of generic fires",
+            library.Count > check.StoryletCapLibrarySize ? $"under {P(cap)}" : $"under {P(cap)} ({F(check.StoryletEvenShareMultiple.ToDoubleForUi(), "0")}× the even share of {generic.Count}; 2% once the library passes {check.StoryletCapLibrarySize})",
+            $"{top.Key}: {P(topShare)}", topShare < cap ? "PASS — see note 1" : "FAIL — see note 1");
         Row("Campaigns where some nation doubles its territory", "5–15%", "no conquest in the slice", "N/A");
         var collapse = runs.Count(r => r.OutputEndShare < 0.5);
         Row("Campaigns where output falls more than 50% (GDP proxy)", "under 10%", $"{collapse} ({P((double)collapse / n)})",
@@ -239,10 +249,10 @@ static class Batch
         b.AppendLine();
         b.AppendLine("## Notes");
         b.AppendLine();
-        b.AppendLine($"1. The 2% cap assumes the spec's full library of thousands of storylets. With {library.Count} storylets, an even spread is already {P(1.0 / library.Count)} each, and the ten arc beats fire in nearly every campaign by design.");
+        b.AppendLine($"1. Generic storylets only (D-047): the {library.Count - generic.Count} scenario-arc beats fire in nearly every campaign by design. The spec's 2% needs a library of 60+; until then the cap is twice the even share.");
         b.AppendLine("2. There is no GDP in the slice. The proxy is legacy chips plus drones (weighted ×1,000) on the last day against Day 0.");
         b.AppendLine("3. Three transformers are wrecked and Kestria holds two spares; a new one takes 730+ days. Only the lights_out choice that sends both spares to the homes (homes_first) relights 90% of the people, in 14 days. The other choices leave part of Ossen East on a 30% mobile unit for the rest of the slice, by design.");
-        b.AppendLine("4. Counts days on which any Kestrian province is in Crisis Time. The spec's 5–10% band is for a 20-year campaign, so it isn't comparable with a 91-day slice that opens with an attack. It is high because the spec's rule keeps a province in Crisis Time while any substation runs below 70%: a wrecked substation on a 30% mobile unit (a new transformer takes 730+ days) holds Ossen East there for the rest of the slice.");
+        b.AppendLine("4. Counts days on which any Kestrian province is in Crisis Time. The spec's 5–10% band is for a 20-year campaign. Under D-046 a province is in crisis while any load gets under 70% of its demand. Loads can't be rerouted in the slice's grid, so a wrecked substation on a 30% mobile unit (a new transformer takes 730+ days) is a live blackout until Day 90.");
         b.AppendLine("5. The slice's ten arc beats land in the first 10 days by design (D-012). The Historian's 90-day rhythm governs everything after.");
         return b.ToString();
     }
