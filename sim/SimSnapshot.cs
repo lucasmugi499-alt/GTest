@@ -27,7 +27,9 @@ public sealed record SimSnapshot(
     IReadOnlyList<NarrativeView> Narratives,
     IReadOnlyList<OperationView> Operations,
     FrontView Front,
-    IReadOnlyList<LogEntry> Log)
+    IReadOnlyList<LogEntry> Log,
+    IReadOnlyList<DecisionView> Decisions,
+    bool IsFinished)
 {
     /// <summary>Snapshot from the point of view of the player nation.</summary>
     public static SimSnapshot Of(Simulation sim)
@@ -50,8 +52,13 @@ public sealed record SimSnapshot(
                 demand += d; served += d * s;
                 dark += (long)Math.Round(loads.Population[l] * (1 - s));
             }
+            var def = sim.Scenario.Provinces[i];
+            int subsDown = Enumerable.Range(0, w.Substations.Count).Count(x => w.Substations.Province[x] == i && w.Substations.State[x] != (int)SubstationState.Online);
+            int subsTotal = Enumerable.Range(0, w.Substations.Count).Count(x => w.Substations.Province[x] == i);
             provinces[i] = new ProvinceView(p.Keys[i], p.Names[i], w.Nations.Keys[p.Owner[i]], p.InCrisis[i],
-                p.Corruption[i].ToDoubleForUi(), demand > 0 ? served / demand : 1, dark, p.Collapsed[i]);
+                p.Corruption[i].ToDoubleForUi(), demand > 0 ? served / demand : 1, dark, p.Collapsed[i],
+                def.Map[0], def.Map[1], def.Map[2], def.Map[3], subsDown, subsTotal, p.InternetShutdown[i],
+                Enumerable.Range(0, w.Loads.Count).Where(l => w.Loads.Province[l] == i).Sum(l => w.Loads.Population[l]));
         }
 
         var produced = new double[w.Catalog.Goods.Count];
@@ -157,7 +164,8 @@ public sealed record SimSnapshot(
             sim.Day, sim.Hour, sim.Calendar.Describe(sim.Day), sim.IsCrisisDay,
             Core.StateHasher.Format(sim.StateHash()),
             provinces, goods, facilities, subs, services, designs,
-            politics, segments, factions, narratives, operations, front, w.Log.Entries);
+            politics, segments, factions, narratives, operations, front, w.Log.Entries,
+            DecisionView.Pending(sim), sim.IsFinished);
     }
 
     public GoodView Good(string key) => Goods.First(g => g.Id == key);
@@ -165,7 +173,8 @@ public sealed record SimSnapshot(
 }
 
 public sealed record ProvinceView(string Id, string Name, string Owner, bool InCrisis, double Corruption,
-    double PowerServed, long PeopleWithoutPower, bool GridCollapsed);
+    double PowerServed, long PeopleWithoutPower, bool GridCollapsed,
+    int MapX, int MapY, int MapW, int MapH, int SubstationsDown, int Substations, bool InternetShutdown, long Population);
 
 /// <summary>A good, nationally. DaysOfCover is null when nothing burns it. Shortage: 0 fine, 1 warning, 2 critical.</summary>
 public sealed record GoodView(string Id, string Name, string Unit, double Stock, double ProducedToday, double? DaysOfCover, int Shortage);

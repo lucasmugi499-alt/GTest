@@ -26,6 +26,7 @@ nations:
 #   labour              skilled labour pools, people (concept: People as inputs)
 #   road_access         refuelling backup generators needs road access (spec Blackout clocks)
 #   refuel_t_per_hour   diesel the province's tanker trucks can deliver to backup generators
+#   map                 [x, y, width, height] of the province on the schematic map, 0-100 each way
 provinces:
   - id: kestria_east_ossen
     name: Ossen East
@@ -35,6 +36,7 @@ provinces:
     labour: { process_engineers: 900, technicians: 2600, grid_linemen: 1200, assembly_workers: 800 }
     road_access: true
     refuel_t_per_hour: 1.5
+    map: [42, 16, 22, 55]
   - id: veyl
     name: Veyl
     owner: kestria
@@ -43,6 +45,7 @@ provinces:
     labour: { grid_linemen: 80 }
     road_access: true
     refuel_t_per_hour: 0.5
+    map: [64, 36, 8, 18]
   - id: kestria_interior
     name: Kestria Interior
     owner: kestria
@@ -51,6 +54,7 @@ provinces:
     labour: { process_engineers: 1400, technicians: 4000, grid_linemen: 6000, assembly_workers: 4000, software_engineers: 5000 }
     road_access: true
     refuel_t_per_hour: 30
+    map: [4, 5, 38, 80]
   - id: varan_core
     name: Varan
     owner: varan
@@ -59,6 +63,7 @@ provinces:
     labour: {}
     road_access: true
     refuel_t_per_hour: 0
+    map: [72, 3, 24, 82]
 
 # National Days of Cover at Day 0, stock plus imports in transit (D-006). The concept's readout: magnets 45.
 # Stock is spread across provinces in proportion to where each good is used.

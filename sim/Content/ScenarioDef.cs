@@ -14,7 +14,7 @@ public sealed record NationDef(string Id, string Name, string Adjective, Fine Do
 
 public sealed record ProvinceDef(
     string Id, string Name, string Owner, DetailLevel Detail, Fixed Corruption,
-    IReadOnlyList<(string Pool, Fixed People)> Labour, bool RoadAccess, Fixed RefuelTonnesPerHour);
+    IReadOnlyList<(string Pool, Fixed People)> Labour, bool RoadAccess, Fixed RefuelTonnesPerHour, int[] Map);
 
 public sealed record FacilityDef(
     string Id, string Name, string Province, string Owner, string Recipe, Fixed Capacity, Fixed Efficiency,
@@ -76,7 +76,8 @@ public sealed record ScenarioDef(
             x.Fixed("corruption"),
             PoolMap(x.Child("labour")),
             x.Bool("road_access"),
-            x.Fixed("refuel_t_per_hour"))).ToList();
+            x.Fixed("refuel_t_per_hour"),
+            MapRect(x))).ToList();
 
         var cover = scenario.Child("initial_cover_days");
         var coverList = cover.Keys().Select(k => (k, cover.Fixed(k))).ToList();
@@ -130,6 +131,13 @@ public sealed record ScenarioDef(
         def.Validate(catalog);
         def.ValidateM3(catalog);
         return def;
+    }
+
+    private static int[] MapRect(ContentNode x)
+    {
+        var r = x.IntList("map");
+        if (r.Length != 4) throw new ContentException($"{x.Path}.map: expected [x, y, width, height]");
+        return r;
     }
 
     private static List<(string, Fixed)> PoolMap(ContentNode map) => map.Keys().Select(k => (k, map.Fixed(k))).ToList();
