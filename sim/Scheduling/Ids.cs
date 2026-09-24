@@ -57,6 +57,18 @@ public enum SystemId : uint
     MonthlyGovernmentDrift = 205,
     MonthlyInsurgency = 206,
 
+    /// <summary>Not in the spec's weekly list: war exhaustion (spec gives it per week) and escalation decay.</summary>
+    WeeklyWarExhaustion = 109,
+    WeeklyEscalationDecay = 110,
+
+    /// <summary>Not in the spec's monthly list: cyber access and detection (spec: per month), red-line estimates.</summary>
+    MonthlyCyber = 207,
+    MonthlyRedLineEstimate = 208,
+
+    /// <summary>AI reactions and campaign setup rolls.</summary>
+    AiReaction = 300,
+    Setup = 400,
+
     /// <summary>Reserved for tests and tools.</summary>
     TestProbe = 900,
 }
@@ -73,6 +85,11 @@ public enum EntityKind : byte
     Design = 6,
     Import = 7,
     Demand = 8,
+    Operation = 9,
+    Brigade = 10,
+    Faction = 11,
+    ShippingLine = 12,
+    Narrative = 13,
 }
 
 /// <summary>Packs (kind, id) into the "entity" coordinate of a random roll.</summary>

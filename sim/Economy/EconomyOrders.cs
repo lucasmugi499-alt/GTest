@@ -20,6 +20,7 @@ public sealed class RepairSubstationOrder(int issuer, int substation, RepairChoi
         var n = w.Nations;
         if (w.Provinces.Owner[subs.Province[substation]] != Issuer) return OrderOutcome.Refused("Not your substation.");
         if (subs.State[substation] == (int)SubstationState.Online) return OrderOutcome.Refused("Substation is working.");
+        if (subs.State[substation] == (int)SubstationState.Tripped) return OrderOutcome.Refused("Tripped, not damaged: it comes back when the disruption ends.");
 
         switch (choice)
         {
@@ -205,21 +206,33 @@ public sealed class SubstationDamageEvent(int day, int hour, int province, IRead
 
     public override void Apply(TickContext ctx)
     {
+        Damage(ctx, Province, substations);
+        ctx.World.Log.Add(ctx.Day, ctx.Hour, "grid", $"{substations.Count} substations damaged in {ctx.World.Provinces.Names[Province]}.",
+            "", ctx.World.Provinces.Keys[Province]);
+    }
+
+    /// <summary>Marks substations damaged and collapses the region if they carried enough of its load.</summary>
+    public static void Damage(TickContext ctx, int province, IReadOnlyList<int> substations)
+    {
         var w = ctx.World;
-        foreach (int s in substations) w.Substations.State.Set(s, (int)SubstationState.Damaged);
+        foreach (int s in substations)
+        {
+            w.Substations.State.Set(s, (int)SubstationState.Damaged);
+            w.Substations.TripHoursLeft.Set(s, Fixed.Zero);
+        }
 
         var total = Fixed.Zero;
         var lost = Fixed.Zero;
         for (int l = 0; l < w.Loads.Count; l++)
         {
-            if (w.Loads.Province[l] != Province) continue;
+            if (w.Loads.Province[l] != province) continue;
             total += w.Loads.DemandMw[l];
-            if (w.Substations.State.Pending(w.Loads.Substation[l]) == (int)SubstationState.Damaged) lost += w.Loads.DemandMw[l];
+            if (w.Substations.State.Pending(w.Loads.Substation[l]) != (int)SubstationState.Online) lost += w.Loads.DemandMw[l];
         }
         if (total > Fixed.Zero && (lost / total).ToFine() >= ctx.Balance.Grid.CollapseLoadShare)
         {
-            w.Provinces.Collapsed.Set(Province, true);
-            w.Provinces.RestoreLevel.Set(Province, Fine.Zero);
+            w.Provinces.Collapsed.Set(province, true);
+            w.Provinces.RestoreLevel.Set(province, Fine.Zero);
         }
     }
 

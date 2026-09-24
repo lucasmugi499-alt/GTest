@@ -86,7 +86,7 @@ public sealed class ConsumptionPhase : IHourlyPhase
         var stocks = w.Stocks;
         int diesel = w.Catalog.Good(ctx.Balance.Grid.BackupFuelGood);
         int at = stocks.At(p, diesel);
-        var trucks = w.Provinces.RefuelTonnesPerHour[p] * hours;
+        var trucks = w.Provinces.RefuelTonnesPerHour[p] * hours * RefuelMultiplier(ctx, w.Provinces.Owner[p]);
 
         // Spec Shortage allocation applied to the fuel priority list: tiers in order, the short tier shared proportionally.
         var tanks = Enumerable.Range(0, loads.Count).Where(l => loads.Province[l] == p && loads.HasBackup(l)).ToArray();
@@ -105,6 +105,16 @@ public sealed class ConsumptionPhase : IHourlyPhase
         }
         stocks.Stock.Set(at, stocks.Stock.Pending(at) - used);
         stocks.BurnToday.Set(at, stocks.BurnToday.Pending(at) + used);
+    }
+
+    /// <summary>Emergency fuel requisition puts more tankers on the road (content: refuel_multiplier).</summary>
+    private static Fixed RefuelMultiplier(TickContext ctx, int nation)
+    {
+        var m = Fixed.One;
+        var powers = ctx.Content.Scenario.Society.EmergencyPowers;
+        for (int i = 0; i < powers.Count; i++)
+            if ((ctx.World.Politics.PowersMask[nation] & (1 << i)) != 0) m *= powers[i].RefuelMultiplier;
+        return m;
     }
 
     private static void ConsumeFinalDemand(SimWorld w)

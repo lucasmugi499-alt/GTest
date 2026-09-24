@@ -1,3 +1,4 @@
+using Cascade.Sim.Conflict;
 using Cascade.Sim.Content;
 using Cascade.Sim.Core;
 using Cascade.Sim.Economy;
@@ -15,6 +16,8 @@ public sealed class SimulationOptions
     /// <summary>Extra crisis signals, on top of the built-in ones unless <see cref="DefaultCrisisSignals"/> is false.</summary>
     public List<ICrisisSignal> CrisisSignals { get; } = [];
     public bool DefaultCrisisSignals { get; set; } = true;
+    /// <summary>Schedule the scenario's scripted rival actions (D-013). Tests of single systems turn this off.</summary>
+    public bool ScriptedScenario { get; set; } = true;
 }
 
 public enum StepResult
@@ -76,6 +79,7 @@ public sealed class Simulation
         Calendar = new Calendar(content.Scenario.StartDate);
         World = new SimWorld(content);
         EconomySetup.Initialize(World, content);
+        SocietySetup.Initialize(World, content, seed);
 
         _ordersPhase = new OrdersPhase(Orders);
         _phases = new IPhase[12];
@@ -89,8 +93,11 @@ public sealed class Simulation
         }
         _weekly = (options.Weekly ?? DefaultWeekly()).ToArray();
         _monthly = (options.Monthly ?? DefaultMonthly()).ToArray();
-        _signals = (options.DefaultCrisisSignals ? [new GridCrisisSignal(content.Balance)] : Array.Empty<ICrisisSignal>())
+        _signals = (options.DefaultCrisisSignals
+                ? new ICrisisSignal[] { new GridCrisisSignal(content.Balance), new NarrativeCrisisSignal(content.Balance), new FrontCrisisSignal() }
+                : Array.Empty<ICrisisSignal>())
             .Concat(options.CrisisSignals).ToArray();
+        if (options.ScriptedScenario) VaranAi.ScheduleScript(this);
     }
 
     public static Simulation Create(string? contentDir = null, ulong? seed = null, SimulationOptions? options = null)
@@ -107,21 +114,27 @@ public sealed class Simulation
         PhaseId.Production => new ProductionPhase(),
         PhaseId.Logistics => new LogisticsPhase(),
         PhaseId.Consumption => new ConsumptionPhase(Content.Balance),
+        PhaseId.Military => new MilitaryPhase(),
+        PhaseId.Operations => new OperationsPhase(),
+        PhaseId.Information => new InformationPhase(),
+        PhaseId.Society => new SocietyPhase(Content.Balance),
         _ when HourlyPhases.Contains(id) => new StubHourlyPhase(id),
         _ => new StubPhase(id),
     };
 
     private static List<IPeriodicSystem> DefaultWeekly() =>
     [
-        new StubSystem(SystemId.WeeklyMarkets),
+        new MarketsSystem(),
         new StubSystem(SystemId.WeeklyBonds),
-        new StubSystem(SystemId.WeeklyFactions),
-        new StubSystem(SystemId.WeeklyPoliticalCapital),
+        new FactionSystem(),
+        new PoliticalCapitalSystem(),
         new StubSystem(SystemId.WeeklyCorporations),
         new StubSystem(SystemId.WeeklyThreatRecognition),
         new StubSystem(SystemId.WeeklyAiReplan),
         new StubSystem(SystemId.WeeklyForecast),
         new CountermeasureSystem(),
+        new WarExhaustionSystem(),
+        new EscalationDecaySystem(),
     ];
 
     private static List<IPeriodicSystem> DefaultMonthly() =>
@@ -131,8 +144,10 @@ public sealed class Simulation
         new StubSystem(SystemId.MonthlyDemographics),
         new StubSystem(SystemId.MonthlyTraining),
         new StubSystem(SystemId.MonthlyBudget),
-        new StubSystem(SystemId.MonthlyGovernmentDrift),
+        new DriftSystem(),
         new StubSystem(SystemId.MonthlyInsurgency),
+        new CyberMonthlySystem(),
+        new RedLineEstimateSystem(),
     ];
 
     /// <summary>
@@ -249,6 +264,7 @@ public sealed class Simulation
 
     private TickContext Context(int hour, TickSlot slot) => new()
     {
+        Content = Content,
         World = World,
         Balance = Balance,
         Calendar = Calendar,

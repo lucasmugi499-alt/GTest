@@ -15,7 +15,7 @@ public static class EconomyRules
     {
         if (overrideTier >= 0) return (PriorityTier)overrideTier;
         var t = b.Economy.TierOf(kind);
-        if (kind == "military" && mobilizationLevel >= b.Economy.MilitaryHighFromMobilization && t > PriorityTier.High)
+        if (kind == b.Economy.MilitaryKind && mobilizationLevel >= b.Economy.MilitaryHighFromMobilization && t > PriorityTier.High)
             t = PriorityTier.High;
         return t;
     }
@@ -43,6 +43,18 @@ public static class EconomyRules
     {
         var bonus = Fixed.One + b.Economy.JitEfficiencyBonus.Times(Fine.One - doctrine);
         return Fixed.Min(Fixed.One, e * bonus);
+    }
+
+    /// <summary>
+    /// Capacity after mobilization: military lines run at the level's output multiplier (spec Mobilization levels:
+    /// ×1.2 at heightened readiness, ×1.8 at partial mobilization).
+    /// </summary>
+    public static Fixed EffectiveCapacity(SimWorld w, Balance b, int f)
+    {
+        var cap = w.Facilities.Capacity[f];
+        if (w.Facilities.Kind[f] != b.Economy.MilitaryKind) return cap;
+        int level = w.Nations.MobilizationLevel[OwnerOf(w, w.Facilities.Province[f])];
+        return cap * b.Mobilization.MilitaryOutput[level];
     }
 
     /// <summary>Lowest available ÷ required over a facility's labour pools (spec Production: L).</summary>

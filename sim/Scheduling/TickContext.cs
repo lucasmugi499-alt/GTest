@@ -7,6 +7,7 @@ namespace Cascade.Sim.Scheduling;
 /// <summary>Everything a phase or system may use during one pass: state, rules, time and its random streams.</summary>
 public sealed class TickContext
 {
+    public required ContentSet Content { get; init; }
     public required SimWorld World { get; init; }
     public required Balance Balance { get; init; }
     public required Calendar Calendar { get; init; }

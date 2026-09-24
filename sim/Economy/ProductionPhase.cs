@@ -41,7 +41,7 @@ public sealed class ProductionPhase : IPhase
                     var inputs = recipes[f.Recipe[i]].Inputs;
                     for (int k = 0; k < inputs.Count; k++)
                         if (inputs[k].Good == g)
-                            claims.Add((true, i, k, inputs[k].Qty * f.Capacity[i], EconomyRules.FacilityTier(w, b, i)));
+                            claims.Add((true, i, k, inputs[k].Qty * EconomyRules.EffectiveCapacity(w, b, i), EconomyRules.FacilityTier(w, b, i)));
                 }
                 for (int d = 0; d < w.Demand.Count; d++)
                     if (w.Demand.Province[d] == p && w.Demand.Good[d] == g)
@@ -77,7 +77,7 @@ public sealed class ProductionPhase : IPhase
         var recipe = w.Catalog.Recipes[f.Recipe[i]];
         int p = f.Province[i];
         int nation = w.Provinces.Owner[p];
-        var capacity = f.Capacity[i];
+        var capacity = EconomyRules.EffectiveCapacity(w, b, i);
 
         // min(1, min_i a_i ÷ (r_i C))
         var inputFactor = Fine.One;
