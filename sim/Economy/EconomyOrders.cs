@@ -19,13 +19,13 @@ public sealed class RepairSubstationOrder(int issuer, int substation, RepairChoi
         var subs = w.Substations;
         var n = w.Nations;
         if (w.Provinces.Owner[subs.Province[substation]] != Issuer) return OrderOutcome.Refused("Not your substation.");
-        if (subs.State[substation] == (int)SubstationState.Online) return OrderOutcome.Refused("Substation is working.");
-        if (subs.State[substation] == (int)SubstationState.Tripped) return OrderOutcome.Refused("Tripped, not damaged: it comes back when the disruption ends.");
+        if (subs.State.Pending(substation) == (int)SubstationState.Online) return OrderOutcome.Refused("Substation is working.");
+        if (subs.State.Pending(substation) == (int)SubstationState.Tripped) return OrderOutcome.Refused("Tripped, not damaged: it comes back when the disruption ends.");
 
         switch (choice)
         {
             case RepairChoice.Mobile:
-                if (subs.MobileAssigned[substation]) return OrderOutcome.Refused("A mobile unit is already there.");
+                if (subs.MobileAssigned.Pending(substation)) return OrderOutcome.Refused("A mobile unit is already there.");
                 if (n.MobileSubstations.Pending(Issuer) <= 0) return OrderOutcome.Refused("No mobile units left.");
                 n.MobileSubstations.Set(Issuer, n.MobileSubstations.Pending(Issuer) - 1);
                 subs.MobileAssigned.Set(substation, true);
@@ -33,14 +33,14 @@ public sealed class RepairSubstationOrder(int issuer, int substation, RepairChoi
                 return OrderOutcome.Ok;
 
             case RepairChoice.Spare:
-                if (subs.Repair[substation] != (int)RepairKind.None) return OrderOutcome.Refused("A repair is already under way.");
+                if (subs.Repair.Pending(substation) != (int)RepairKind.None) return OrderOutcome.Refused("A repair is already under way.");
                 if (n.SpareTransformers.Pending(Issuer) <= 0) return OrderOutcome.Refused("No spare transformers left.");
                 n.SpareTransformers.Set(Issuer, n.SpareTransformers.Pending(Issuer) - 1);
                 Start(subs, RepairKind.Spare, Fixed.FromInt(g.SpareRepairDays));
                 return OrderOutcome.Ok;
 
             default:
-                if (subs.Repair[substation] != (int)RepairKind.None) return OrderOutcome.Refused("A repair is already under way.");
+                if (subs.Repair.Pending(substation) != (int)RepairKind.None) return OrderOutcome.Refused("A repair is already under way.");
                 var rng = ctx.Rng(SystemId.GridDispatch, EntityRef.Of(EntityKind.Substation, substation));
                 Start(subs, RepairKind.NewTransformer, Fixed.FromInt(rng.NextInt(g.NewTransformerDaysMin, g.NewTransformerDaysMax + 1)));
                 return OrderOutcome.Ok;

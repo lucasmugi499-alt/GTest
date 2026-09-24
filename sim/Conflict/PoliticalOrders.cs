@@ -195,7 +195,7 @@ public sealed class ForensicSweepOrder(int issuer, int province) : Order(issuer)
         {
             if (ops.Victim[i] != Issuer || ops.State.Pending(i) != (int)OperationState.Ready) continue;
             if (w.Provinces.IdOf(ops.Defs[i].TargetProvince) != province) continue;
-            Cyber.Detect(ctx, i, "Forensic sweep");
+            Cyber.Detect(ctx, i, "Forensic sweep", escalate: false);
             found = true;
         }
         if (!found) w.Log.Add(ctx.Day, ctx.Hour, "cyber", $"Forensic sweep of {w.Provinces.Names[province]} finds nothing.", w.Nations.Keys[Issuer]);

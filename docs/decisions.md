@@ -114,7 +114,7 @@ Varan's scripted actions happen on **fixed days**, so tests are reproducible:
 
 - A Brief card offers a **forensic sweep for 15 Political Capital**, available between Day 0 and Day 2. It is deliberately easy to miss.
 - **If the player defuses the seed,** Day 4 still happens:
-  - Varan's intrusion is detected and attributed to Varan: a "Cyber intrusion detected" action, escalation +4.
+  - Varan's intrusion is detected and attributed to Varan: a "Cyber intrusion detected" action, escalation +4. The sweep itself finds the access quietly, so the defused path costs +4 once, on Day 4 (audit fix; it was counted twice).
   - Varan hits a weaker target instead: **two substations in Kestria Interior**, using the same grid disruption effect.
   - The blackout is shorter and does not reach the fab.
 
@@ -409,7 +409,7 @@ Five scores, each 0 to 100 (balance.yaml `chronicle`):
 These changes were made after running 1,000 seeds with random choices.
 
 - **Spare transformers:** Kestria now holds 2, not 1.
-  - With 1, the Day 17 blackout's median recovery was over 30 days, so the rest of the slice was dominated by one repair queue.
+  - With 1, the Day 4 blackout's median recovery was over 30 days, so the rest of the slice was dominated by one repair queue.
   - With 2, the median is about 14 days.
   - `lights_out` hands both spares out in each option.
 - **Deepfake Virality 20:** see D-038.

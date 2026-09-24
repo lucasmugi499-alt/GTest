@@ -71,15 +71,19 @@ public static class Cyber
         }
     }
 
-    /// <summary>The victim's intelligence finds the access: A resets to 0, defence rises by 10, and it's an escalation.</summary>
-    public static void Detect(TickContext ctx, int op, string how)
+    /// <summary>
+    /// The victim's intelligence finds the access: A resets to 0, defence rises by 10, and it's an escalation.
+    /// A forensic sweep passes escalate false: D-014 books the +4 when the attacker's attempt is caught on the day.
+    /// </summary>
+    public static void Detect(TickContext ctx, int op, string how, bool escalate = true)
     {
         var ops = ctx.World.Operations;
         ops.State.Set(op, (int)OperationState.Detected);
         ops.Access.Set(op, Fixed.Zero);
         ops.Defence.Set(op, ops.Defence.Pending(op) + ctx.Balance.Cyber.DefenceGainOnDetection);
-        Escalation.Record(ctx, ops.Attacker[op], ops.Victim[op], "cyber_intrusion_detected",
-            $"{how}: {ctx.World.Nations.Adjectives[ops.Attacker[op]]} access in {ctx.World.Provinces.Names[ctx.World.Provinces.IdOf(ops.Defs[op].TargetProvince)]} systems found and closed.");
+        var text = $"{how}: {ctx.World.Nations.Adjectives[ops.Attacker[op]]} access in {ctx.World.Provinces.Names[ctx.World.Provinces.IdOf(ops.Defs[op].TargetProvince)]} systems found and closed.";
+        if (escalate) Escalation.Record(ctx, ops.Attacker[op], ops.Victim[op], "cyber_intrusion_detected", text);
+        else ctx.World.Log.Add(ctx.Day, ctx.Hour, "cyber", text, ctx.World.Nations.Keys[ops.Victim[op]], ops.Defs[op].Id);
     }
 
     /// <summary>c(t) = c_max (1 − e^(−t/14)); c_max 0.9 direct, 0.6 through a proxy.</summary>

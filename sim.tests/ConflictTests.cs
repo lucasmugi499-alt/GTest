@@ -103,6 +103,22 @@ public class ConflictTests
         Assert.Equal(lastBig, w.Escalation.LastBigAction[w.Escalation.At(0, 1)]);
     }
 
+    [Fact]
+    public void TwoSpareOrdersInOnePhaseSpendOneSpare()
+    {
+        // Clicking Spare twice before the clock moves must not spend two transformers on one substation.
+        var sim = TestContent.NewScenario();
+        sim.RunThrough(4);
+        var w = sim.World;
+        int sub = Veyl.Sub(sim, "ossen_industrial");
+        Assert.Equal((int)SubstationState.Damaged, w.Substations.State[sub]);
+        int before = w.Nations.SpareTransformers[0];
+        sim.Orders.Enqueue(new RepairSubstationOrder(0, sub, RepairChoice.Spare));
+        sim.Orders.Enqueue(new RepairSubstationOrder(0, sub, RepairChoice.Spare));
+        sim.StepHour();
+        Assert.Equal(before - 1, w.Nations.SpareTransformers[0]);
+    }
+
     // ---- Cyber ----
 
     [Fact]
@@ -156,6 +172,8 @@ public class ConflictTests
 
         sim.RunThrough(3);
         sim.StepHour(); sim.StepHour(); sim.StepHour(); // through 02:00 on day 4
+        // Exactly one +4 for the whole defused path: the sweep finds the access quietly; the caught attempt escalates.
+        Assert.Single(w.Log.Entries, e => e.Subject == "cyber_intrusion_detected");
         Assert.Contains(w.Log.Entries, e => e.Day == 4 && e.Subject == "cyber_intrusion_detected");
         Assert.Equal((int)SubstationState.Tripped, w.Substations.State[Veyl.Sub(sim, "interior_north")]);
         Assert.Equal((int)SubstationState.Online, w.Substations.State[Veyl.Sub(sim, "ossen_industrial")]);
