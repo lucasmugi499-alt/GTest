@@ -30,7 +30,8 @@ public class ViewTests
     public void CascadeShowsTheBlackoutRollingDownstream()
     {
         var sim = TestContent.NewScenario();
-        Story.Play(sim, 14);
+        // fab_first: the industrial substation waits for a spare (about Day 18), so on Day 14 it is still dark.
+        Story.Play(sim, 14, new() { ["lights_out"] = "fab_first" });
         var view = CascadeGraph.Build(sim);
         Health Of(string id) => view.Nodes.Single(n => n.Id == id).Health;
         Assert.Equal(Health.Failing, Of("sub:ossen_industrial"));

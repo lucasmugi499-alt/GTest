@@ -148,21 +148,21 @@ storylets:
     text: >
       Three eastern substations have tripped and the transformers are wrecked. Four million people are in the dark. Cell
       towers will die by dawn. At Ossen General, {nurse} counts the generator fuel. {engineer} needs to know where to send
-      the one spare transformer and the two mobile units.
+      the two spare transformers and the two mobile units.
     preconditions: [ "province.kestria_east_ossen.subs_down >= 3" ]
     roles:
       nurse: { role: citizen, portfolio: health }
       engineer: { role: engineer, portfolio: grid }
     choices:
       - id: homes_first
-        text: "Homes and the hospital first: mobile units to Ossen North and South, the spare to Ossen South."
-        hint: "People get power back first. The fab waits."
-        effects: { order.repair: [ { substation: ossen_north, method: mobile }, { substation: ossen_south, method: mobile }, { substation: ossen_south, method: spare } ] }
+        text: "Homes and the hospital first: both spares to Ossen North and South, one mobile unit to Ossen North until its spare lands, the other to the fab."
+        hint: "Four million people back in about two weeks. The fab limps on a mobile unit."
+        effects: { order.repair: [ { substation: ossen_north, method: spare }, { substation: ossen_south, method: spare }, { substation: ossen_north, method: mobile }, { substation: ossen_industrial, method: mobile } ] }
         memories: { nurse: 20, engineer: 10 }
       - id: fab_first
-        text: "The fab first: the spare to the industrial substation, mobile units to the homes."
-        hint: "Chips back in about three weeks after the repair. Homes wait longer."
-        effects: { order.repair: [ { substation: ossen_industrial, method: spare }, { substation: ossen_north, method: mobile }, { substation: ossen_south, method: mobile } ] }
+        text: "The fab first: a spare to the industrial substation, the other to Ossen South, mobile units to Ossen North."
+        hint: "Chips back about three weeks after the repair. Two million people wait on a mobile unit."
+        effects: { order.repair: [ { substation: ossen_industrial, method: spare }, { substation: ossen_south, method: spare }, { substation: ossen_north, method: mobile } ] }
         memories: { nurse: -10, engineer: 5 }
       - id: requisition
         text: "Declare an emergency and requisition diesel for the generators."
@@ -447,7 +447,7 @@ storylets:
   - id: generator_fuel
     tier: minor
     weight: 1
-    intensity: 0.6
+    intensity: -0.2
     cooldown_days: 20
     expires_days: 2
     default: wait
@@ -524,7 +524,7 @@ storylets:
     tier: minor
     weight: 1
     intensity: 0.2
-    cooldown_days: 30
+    cooldown_days: 45
     expires_days: 3
     default: ignore
     title: "Bond market jitters"
@@ -600,7 +600,7 @@ storylets:
     tier: minor
     weight: 1
     intensity: -0.2
-    cooldown_days: 30
+    cooldown_days: 45
     expires_days: 3
     default: decline
     title: "The shipping lines"
@@ -650,7 +650,7 @@ storylets:
   - id: towers_dark
     tier: minor
     weight: 1
-    intensity: 0.3
+    intensity: -0.2
     cooldown_days: 20
     expires_days: 2
     default: wait
@@ -676,7 +676,7 @@ storylets:
     tier: minor
     weight: 1
     intensity: 0.2
-    cooldown_days: 30
+    cooldown_days: 45
     expires_days: 3
     default: market
     title: "Magnet hoarding"
@@ -700,7 +700,7 @@ storylets:
     tier: minor
     weight: 1
     intensity: -0.3
-    cooldown_days: 30
+    cooldown_days: 45
     expires_days: 3
     default: stay
     title: "Veyl is afraid"
@@ -725,7 +725,7 @@ storylets:
     tier: minor
     weight: 1
     intensity: -0.2
-    cooldown_days: 21
+    cooldown_days: 45
     expires_days: 4
     default: later
     title: "A firmware patch"

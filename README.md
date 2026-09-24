@@ -17,7 +17,7 @@ A near-future grand strategy game with deep simulation and a story engine on top
 | M3 Society and conflict | Politics, information, cyber, military (light), escalation | Done |
 | M4 Narrative | Storylets, Director, Chronicle; playable as text | Done |
 | M5 Godot UI | Map, Cascade view, Brief, storylet dialog, readouts | Done |
-| M6 Balance | 1,000-seed batch runs and metrics | Next |
+| M6 Balance | 1,000-seed batch runs and metrics | Done |
 
 ## What you need
 
@@ -129,6 +129,18 @@ How to play:
 ```bash
 /Applications/Godot_mono.app/Contents/MacOS/Godot --headless --path ~/Desktop/Cascade/game -- --auto random
 ```
+
+**Run the balance batch.** This plays 1,000 campaigns with random choices across all your CPU cores, then times 50 more one at a time. It takes about 15 seconds and writes the report to [docs/balance-report.md](docs/balance-report.md):
+
+```bash
+dotnet run --project tools -c Release -- batch --seeds 1000 --report docs/balance-report.md
+```
+
+Options:
+- `--threads N` sets how many cores to use.
+- `--timing-seeds N` sets how many campaigns are timed.
+- `--replay-every N` replays every Nth campaign to check its hash.
+- `--force storylet=choice,…` fixes chosen answers, for example `--force day10_decision=strike_back` to see how often striking back leads to war.
 
 ## Folder layout
 

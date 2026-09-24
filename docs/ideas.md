@@ -25,3 +25,9 @@ These came from the original slice brief:
 - **Holding cost of stockpiles:** 1.5% of stock value per month (spec doctrine). There is no budget in the slice yet.
 - **Multi-hop tie-lines:** transit through a neighbour's grid (D-028).
 - **Per-facility input stocks:** the spec's sample record keeps stock at the facility; the slice keeps it per province (D-026).
+
+## Found during the M6 balance pass
+
+- **Narrative ceiling (γ):** under the spec's γ = 0.02, belief always settles at about 40%, whatever the counter-measure, so counters only delay tipping. Options: a counter-measure that raises γ (debunking speeds up disbelief), or a Virality decay per day since release. Needs a design call (D-043).
+- **Varan's ±1 day jitter:** would also spread out the storylet-share metric.
+- **Storylet pool size:** the spec's "no storylet above 2% of firings" needs at least about 60 storylets in the pool.

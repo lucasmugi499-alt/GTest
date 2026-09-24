@@ -185,7 +185,7 @@ public class SocietyTests
         int n = nar.IdOf("president_fled");
         var hours = nar.RumorHours[n];
         Assert.True(hours > Fixed.Zero, "Rumor Velocity should forecast a tipping point");
-        sim.RunThrough(8);
+        sim.RunThrough(10); // Virality 20: left alone it tips about 5 days after the Day 4 release (D-038)
         Assert.Contains(Enumerable.Range(0, nar.Segments), s => nar.Established[nar.At(n, s)]);
         Assert.True(nar.FactionEffectsApplied[n]);
     }

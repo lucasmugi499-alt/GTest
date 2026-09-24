@@ -21,6 +21,7 @@ try
         "run" => Runner.Run(opts, printDaily: true),
         "hash" => Runner.Run(opts, printDaily: false),
         "play" => Play.Run(opts),
+        "batch" => Batch.Run(opts),
         _ => Runner.Help(),
     };
 }

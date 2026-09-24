@@ -73,7 +73,7 @@ escalation:
 
 # Varan (spec Personalities, Red lines). Personality table in balance.yaml.
 varan:
-  personality: pragmatic
+  personality: cautious
   nationalists_strong: false
   economy_weak: false
   drone_ops_near_border: 1

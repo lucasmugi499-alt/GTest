@@ -61,7 +61,7 @@ public class ConflictTests
     [Fact]
     public void VaranAnswersAKestrianActionWithinTwoWeeks()
     {
-        // Kestria burns its dam access (disruptive cyber, weight 6): Varan answers with an action of weight ≤ 6 × 1.0.
+        // Kestria burns its dam access (disruptive cyber, weight 6): cautious Varan (r = 0.8, D-043) answers with weight ≤ 4.8.
         var sim = TestContent.NewSim();
         var w = sim.World;
         int dam = w.Operations.IdOf("kestria_ossen_dam");
@@ -69,9 +69,9 @@ public class ConflictTests
         sim.StepDay();
         Assert.Equal((int)OperationState.Used, w.Operations.State[dam]);
         var intent = w.Log.Entries.Single(e => e.Kind == "ai_intent");
-        Assert.Equal("cyber_disruption", intent.Subject); // the heaviest repertoire action that fits: weight 6
+        Assert.Equal("influence_campaign", intent.Subject); // the heaviest repertoire action that fits: weight 3
         sim.RunThrough(15);
-        Assert.Contains(w.Log.Entries, e => e.Kind == "escalation" && e.Actor == "varan" && e.Subject == "disruptive_cyber");
+        Assert.Contains(w.Log.Entries, e => e.Kind == "escalation" && e.Actor == "varan" && e.Subject == "influence_detected");
     }
 
     [Fact]

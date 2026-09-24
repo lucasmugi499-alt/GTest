@@ -319,7 +319,7 @@ All of these are in `balance.yaml` under `society`.
   - The spec's η = 0.5 per day caps how fast exposed people become believers: at most about 30% of the exposed a day.
   - So no Virality can make a deepfake tip in the concept's "about five hours".
 - **What was done:**
-  - The spec's formulas are kept, and the deepfake's Virality is 50, so it tips about 2.5 to 3 days after release (Day 7).
+  - The spec's formulas are kept, and the deepfake's Virality is 20 (lowered from 50 in M6, see D-043), so left alone it tips about 5 days after release (Day 4, 06:00), around Day 9.
   - Rumor Velocity reports that forecast.
 - **Hourly steps:** when any segment's province is in Crisis Time, every narrative steps hourly that day (the model couples all segments).
 
@@ -403,3 +403,28 @@ Five scores, each 0 to 100 (balance.yaml `chronicle`):
   - Health: facilities are green at 95%+ of their capacity after the fab ramp, amber at 50%+, red below.
   - Goods are red under 14 days of cover and amber below their replacement lead time. Substations are red when damaged, amber on a mobile unit.
 - **Screenshot mode** (`--screenshot FILE --screenshot-day D --tab N`) and **autopilot mode** (`--auto MODE`) let a build be checked without a person at the keyboard.
+
+## D-043 · M6 balance pass
+
+These changes were made after running 1,000 seeds with random choices.
+
+- **Spare transformers:** Kestria now holds 2, not 1.
+  - With 1, the Day 17 blackout's median recovery was over 30 days, so the rest of the slice was dominated by one repair queue.
+  - With 2, the median is about 14 days.
+  - `lights_out` hands both spares out in each option.
+- **Deepfake Virality 20:** see D-038.
+  - Under the spec's γ = 0.02, every narrative settles at about 40% belief whatever the counter-measure. Counters only delay the tipping point.
+  - At 50 it tipped within a day or two of any counter, so choosing one felt meaningless.
+  - At 20, the four options spread out. Left alone, it tips around Day 9. Going live also tips it around Day 9. A takedown delays it to about Day 11, and a shutdown to about Day 13.
+  - This is a finding for the designer, not a fix. See ideas.md.
+- **Storylet repetition:**
+  - `generator_fuel` and `towers_dark` have their intensity lowered by 0.2.
+  - Cooldown is 45 days for `design_bureau_patch`, `border_town_fear`, `bond_jitters`, `magnet_hoarding` and `shipping_guarantee`.
+  - Every storylet now fires in some campaign. The most-used one takes about 9% of all firings.
+  - The spec's "no storylet above 2%" can't be met with 28 storylets, since the average is 3.6%.
+- **Varan is Cautious, not Pragmatic** (red line mean 70, r = 0.8).
+  - With Pragmatic, the meter sits at about 56 after Varan's own script, which is close to the red line of about N(60, 10).
+  - So random play reached a Varan offensive in 27% of campaigns, and rung 5+ in 37%. The spec calls war rare in a grey-zone crisis.
+  - With Cautious, random play reaches an offensive in 6.5% of campaigns. Forcing the Day 10 strike-back raises that to 24%.
+  - To switch back, change one line: `personality:` in `conflict.yaml`.
+- **Blackout recovery metric:** a province counts as recovered when served demand is back to 90% of its pre-blackout level.

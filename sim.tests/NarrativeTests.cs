@@ -366,4 +366,18 @@ public class NarrativeTests
             Assert.NotNull(Story.Chosen(sim, "day10_decision"));
         }
     }
+
+    [Theory]
+    [InlineData("homes_first")]
+    [InlineData("fab_first")]
+    public void LightsOutRepairsAreAllCarriedOut(string choice)
+    {
+        // Every repair a lights_out choice promises must fit the spares and mobile units Kestria actually holds.
+        var sim = TestContent.NewScenario();
+        Story.Play(sim, 5, new() { ["lights_out"] = choice });
+        Assert.DoesNotContain(sim.World.Log.Entries, e => e.Kind == "order_refused");
+        var subs = sim.World.Substations;
+        if (choice == "homes_first")
+            Assert.True(subs.MobileAssigned[subs.IdOf("ossen_industrial")], "the fab limps on a mobile unit");
+    }
 }

@@ -12,7 +12,7 @@ nations:
     name: Republic of Kestria
     adjective: Kestrian
     doctrine: 0.46            # j: target stock = 7 + 83j ≈ 45 days of burn (spec Days of Cover and doctrine)
-    spare_transformers: 1     # in reserve; restore a damaged substation in 14 days (spec Substations)
+    spare_transformers: 2     # in reserve; restore a damaged substation in 14 days (spec Substations). M6: 2 makes the Day 10 triage real
     mobile_substations: 2     # mobile emergency units: 30% capacity in 7 days
   - id: varan
     name: Varan Union

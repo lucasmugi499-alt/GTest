@@ -138,11 +138,12 @@ public class GridAndFabTests
         Assert.Equal((int)SubstationState.Damaged, sim.World.Substations.State[sub]);
         sim.StepDay();      // day 18
         Assert.Equal((int)SubstationState.Online, sim.World.Substations.State[sub]);
-        Assert.Equal(0, sim.World.Nations.SpareTransformers[0]);
-        // Only one spare: the next order is refused.
-        Veyl.TripOssen(sim, 20, 2, "ossen_north");
+        Assert.Equal(1, sim.World.Nations.SpareTransformers[0]);
+        // Two spares in reserve: the third order is refused.
+        Veyl.TripOssen(sim, 20, 2, "ossen_north", "ossen_south");
         sim.RunThrough(20);
         sim.Orders.Enqueue(new RepairSubstationOrder(0, Veyl.Sub(sim, "ossen_north"), RepairChoice.Spare));
+        sim.Orders.Enqueue(new RepairSubstationOrder(0, Veyl.Sub(sim, "ossen_south"), RepairChoice.Spare));
         sim.StepDay();
         Assert.False(sim.AppliedOrders[^1].Outcome.Accepted);
         Assert.Equal("No spare transformers left.", sim.AppliedOrders[^1].Outcome.Reason);
