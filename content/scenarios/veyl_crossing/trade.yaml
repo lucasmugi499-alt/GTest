@@ -1,0 +1,19 @@
+# Transport (D-007: fixed lead times and capacities, no min-cost flow).
+
+# Domestic edges, usable both ways. capacity_t: tonnes per day by good class.
+edges:
+  - { a: kestria_east_ossen, b: kestria_interior,   lead_days: 1, capacity_t: { bulk: 20000, container: 6000, fuel: 9000, high_value: 800 } }
+  - { a: veyl,               b: kestria_interior,   lead_days: 2, capacity_t: { bulk: 2000,  container: 600,  fuel: 1500, high_value: 100 } }
+  - { a: veyl,               b: kestria_east_ossen, lead_days: 1, capacity_t: { bulk: 2000,  container: 600,  fuel: 1500, high_value: 100 } }
+
+# Imports. from: a nation id (subject to its export controls) or "world" (allied and neutral suppliers).
+#   capacity_per_day  most units that can be shipped per day, in the good's unit
+#   sea               arrives by ship through the port (war-risk insurance applies from M3)
+imports:
+  - { good: rare_earth_magnet, from: varan, to: kestria_interior, lead_days: 21, capacity_per_day: 5000,  sea: true }
+  - { good: gallium,           from: varan, to: kestria_interior, lead_days: 21, capacity_per_day: 40,    sea: true }
+  - { good: wafer_blank,       from: world, to: kestria_interior, lead_days: 25, capacity_per_day: 5000,  sea: true }
+  - { good: neon_gas,          from: world, to: kestria_interior, lead_days: 25, capacity_per_day: 150,   sea: true }
+  - { good: germanium_optic,   from: world, to: kestria_interior, lead_days: 30, capacity_per_day: 1000,  sea: true }
+  - { good: battery_lithium,   from: world, to: kestria_interior, lead_days: 30, capacity_per_day: 800,   sea: true }
+  - { good: diesel,            from: world, to: kestria_interior, lead_days: 14, capacity_per_day: 20000, sea: true }

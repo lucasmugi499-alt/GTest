@@ -9,3 +9,74 @@ sim:
   state_hash:
     # Spec, Determinism rules: "peers compare a hash of full state every 30 ticks".
     check_interval_days: 30
+
+economy:
+  # Spec Shortage allocation: default priority tier by kind of consumer. The player can reorder any of it.
+  priority:
+    hospital: critical
+    water: critical
+    grid_repair: critical
+    cell_tower: high          # D-027: the spec doesn't list cell towers
+    military: normal          # becomes high from the mobilization level below
+    industry: normal
+    residential: low
+    datacentre: low
+  military_high_from_mobilization: 2
+  # Spec Efficiency and retooling.
+  efficiency:
+    growth_per_day: 0.01
+    max: 1
+    max_dual_use: 0.9
+    min: 0.1
+    retool_same_line: 0.8
+    retool_new_line: 0.3
+  # Spec Days of Cover and doctrine. Target stock = (base + span × j) days of burn.
+  doctrine:
+    base_days: 7
+    span_days: 83
+    jit_efficiency_bonus: 0.03   # industry efficiency + 3% × (1 − j)
+  days_of_cover:
+    burn_half_life_days: 7
+    transit_window_days: 30
+    critical_days: 14
+  imports:
+    replenish_days: 14           # D-029: import orders close the gap to target stock over this many days
+
+# Spec Fab yield.
+fab:
+  yield_start: 0.30
+  yield_max_legacy: 0.92
+  yield_max_leading: 0.80
+  experience_scale_days: 285
+  engineer_loss_factor: 0.5
+  wip_cycle_days: 42
+  ramp_days: 21
+  engineer_pool: process_engineers  # the labour pool whose losses cut experience
+
+# Spec Grid and blackouts.
+grid:
+  crisis_below_ratio: 0.70         # spec Crisis sub-ticks: any grid node below 70%
+  spare_repair_days: 14
+  mobile_unit_days: 7
+  mobile_unit_capacity: 0.3
+  new_transformer_days_min: 730
+  new_transformer_days_max: 1460
+  repair_crew_pool: grid_linemen
+  linemen_per_repair: 300          # D-028: crew for one substation job at full speed
+  black_start_restore_per_day: 0.25
+  collapse_load_share: 0.75        # D-028: a hit on this share of a region's load collapses it
+  backup_fuel_good: diesel
+  backup_tank_hours:
+    cell_tower: 6
+    water: 18
+    hospital: 72
+
+# Spec Countermeasure decay.
+countermeasures:
+  decay_per_week: 0.03             # δ
+  adaptation: 1                    # A, Varan's adaptation vs Kestrian designs (spec range 0.5 to 2.0)
+  cap_decay_share: 0.5             # D-030: the design cap decays at half e's rate
+  firmware_gain: 0.1
+  firmware_days: 5
+  revision_cap: 1
+  revision_days: 30                # D-030: the spec gives no time for a hardware revision

@@ -1,0 +1,66 @@
+# The power grid (spec Grid and blackouts). One dispatch region per province.
+# Varan's grid isn't simulated in this slice.
+
+# Generation. black_start: can restart its region after a collapse, 25% of load per day.
+plants:
+  - { id: ossen_dam,          province: kestria_east_ossen, capacity_mw: 750,   black_start: true }   # ~30% of eastern generation (concept)
+  - { id: ossen_gas,          province: kestria_east_ossen, capacity_mw: 1800,  black_start: false }
+  - { id: veyl_diesel,        province: veyl,               capacity_mw: 60,    black_start: true }
+  - { id: interior_fleet,     province: kestria_interior,   capacity_mw: 13000, black_start: true }
+
+# Substations: transformer capacity. A damaged one has zero capacity until repaired.
+substations:
+  - { id: ossen_north,        province: kestria_east_ossen, capacity_mw: 900 }
+  - { id: ossen_south,        province: kestria_east_ossen, capacity_mw: 900 }
+  - { id: ossen_industrial,   province: kestria_east_ossen, capacity_mw: 500 }
+  - { id: ossen_west,         province: kestria_east_ossen, capacity_mw: 1000 }
+  - { id: veyl_main,          province: veyl,               capacity_mw: 250 }
+  - { id: interior_capital,   province: kestria_interior,   capacity_mw: 5000 }
+  - { id: interior_north,     province: kestria_interior,   capacity_mw: 2500 }
+  - { id: interior_south,     province: kestria_interior,   capacity_mw: 2500 }
+  - { id: interior_port,      province: kestria_interior,   capacity_mw: 3000 }
+
+# Tie-lines between regions, MW either way.
+tie_lines:
+  - { a: kestria_east_ossen, b: kestria_interior, capacity_mw: 800 }
+  - { a: veyl,               b: kestria_east_ossen, capacity_mw: 250 }
+
+# Loads other than facilities (facilities add their own from power_mw).
+#   kind        sets the default priority tier (balance.yaml: economy.priority)
+#   population  people served, for "people without power"
+#   backup      backup generator: diesel burn, and tank_hours if not the default for its kind
+#               (balance.yaml: grid.backup_tank_hours; spec Blackout clocks). Omit for no backup.
+loads:
+  # Ossen East: north, south and industrial are the three substations tripped on Day 4 (4.1 million people).
+  - { id: ossen_north_homes,    substation: ossen_north,      kind: residential, demand_mw: 600, population: 2_000_000 }
+  - { id: ossen_north_cells,    substation: ossen_north,      kind: cell_tower,  demand_mw: 10,  population: 0, backup: { diesel_t_per_hour: 0.5 } }
+  - { id: ossen_north_water,    substation: ossen_north,      kind: water,       demand_mw: 25,  population: 0, backup: { diesel_t_per_hour: 1.2 } }
+  - { id: ossen_south_homes,    substation: ossen_south,      kind: residential, demand_mw: 630, population: 2_100_000 }
+  - { id: ossen_general,        substation: ossen_south,      kind: hospital,    demand_mw: 12,  population: 0, backup: { tank_hours: 60, diesel_t_per_hour: 0.6 } }   # concept: Mara Voss counts 60 hours
+  - { id: ossen_south_cells,    substation: ossen_south,      kind: cell_tower,  demand_mw: 10,  population: 0, backup: { diesel_t_per_hour: 0.5 } }
+  - { id: ossen_south_water,    substation: ossen_south,      kind: water,       demand_mw: 25,  population: 0, backup: { diesel_t_per_hour: 1.2 } }
+  - { id: ossen_other_industry, substation: ossen_industrial, kind: industry,    demand_mw: 250, population: 0 }
+  - { id: ossen_west_homes,     substation: ossen_west,       kind: residential, demand_mw: 720, population: 2_400_000 }
+  - { id: ossen_west_cells,     substation: ossen_west,       kind: cell_tower,  demand_mw: 12,  population: 0, backup: { diesel_t_per_hour: 0.6 } }
+  - { id: ossen_west_water,     substation: ossen_west,       kind: water,       demand_mw: 30,  population: 0, backup: { diesel_t_per_hour: 1.4 } }
+  # Veyl
+  - { id: veyl_homes,           substation: veyl_main,        kind: residential, demand_mw: 120, population: 400_000 }
+  - { id: veyl_cells,           substation: veyl_main,        kind: cell_tower,  demand_mw: 3,   population: 0, backup: { diesel_t_per_hour: 0.2 } }
+  - { id: veyl_water,           substation: veyl_main,        kind: water,       demand_mw: 5,   population: 0, backup: { diesel_t_per_hour: 0.3 } }
+  - { id: veyl_border_post,     substation: veyl_main,        kind: military,    demand_mw: 5,   population: 0, backup: { tank_hours: 72, diesel_t_per_hour: 0.2 } }
+  # Kestria Interior (aggregate)
+  - { id: interior_capital_homes, substation: interior_capital, kind: residential, demand_mw: 3300, population: 11_000_000 }
+  - { id: interior_hospitals,     substation: interior_capital, kind: hospital,    demand_mw: 150,  population: 0, backup: { diesel_t_per_hour: 6 } }
+  - { id: interior_capital_water, substation: interior_capital, kind: water,       demand_mw: 200,  population: 0, backup: { diesel_t_per_hour: 8 } }
+  - { id: interior_capital_cells, substation: interior_capital, kind: cell_tower,  demand_mw: 60,   population: 0, backup: { diesel_t_per_hour: 3 } }
+  - { id: interior_datacentres,   substation: interior_capital, kind: datacentre,  demand_mw: 600,  population: 0 }
+  - { id: interior_north_homes,   substation: interior_north,   kind: residential, demand_mw: 1800, population: 6_000_000 }
+  - { id: interior_north_water,   substation: interior_north,   kind: water,       demand_mw: 80,   population: 0, backup: { diesel_t_per_hour: 3 } }
+  - { id: interior_north_cells,   substation: interior_north,   kind: cell_tower,  demand_mw: 30,   population: 0, backup: { diesel_t_per_hour: 1.5 } }
+  - { id: interior_south_homes,   substation: interior_south,   kind: residential, demand_mw: 1680, population: 5_600_000 }
+  - { id: interior_south_water,   substation: interior_south,   kind: water,       demand_mw: 75,   population: 0, backup: { diesel_t_per_hour: 3 } }
+  - { id: interior_south_cells,   substation: interior_south,   kind: cell_tower,  demand_mw: 28,   population: 0, backup: { diesel_t_per_hour: 1.4 } }
+  - { id: interior_port_homes,    substation: interior_port,    kind: residential, demand_mw: 1350, population: 4_500_000 }
+  - { id: interior_port_industry, substation: interior_port,    kind: industry,    demand_mw: 1200, population: 0 }
+  - { id: interior_port_water,    substation: interior_port,    kind: water,       demand_mw: 60,   population: 0, backup: { diesel_t_per_hour: 2.5 } }
+  - { id: interior_port_cells,    substation: interior_port,    kind: cell_tower,  demand_mw: 22,   population: 0, backup: { diesel_t_per_hour: 1.1 } }

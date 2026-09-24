@@ -1,0 +1,7 @@
+# Weapon designs subject to countermeasure decay (spec Countermeasure decay).
+#   effectiveness  e at campaign start (0 to 1)
+#   cap            the most a firmware patch can bring e back to; a hardware revision resets it to 1.0
+fpv_strike_mk2:
+  name: FPV strike drone Mk2
+  effectiveness: 0.85
+  cap: 0.95

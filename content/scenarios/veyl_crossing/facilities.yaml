@@ -1,0 +1,138 @@
+# Facilities (spec Data model: Facility; the fab mirrors the spec's Sample record).
+#   capacity         units of the recipe per day (wafer starts for a fab)
+#   efficiency       E, 0.1 to 1 (spec Efficiency and retooling)
+#   dual_use         converted dual-use line: E_max 0.9 instead of 1.0
+#   experience_days  fabs only: X, cumulative starts ÷ daily capacity (spec Fab yield)
+#   power_mw         draw on its substation; 0 for none
+#   kind             sets the default priority tier (balance.yaml: economy.priority)
+#   labour           people required, by pool
+#   damage           D, 0 to 1
+# D-015: Tessera Fab 3 is 40% of national legacy capacity (1,200 of 3,000 starts, same efficiency and yield).
+
+- id: tessera_fab_3
+  name: Tessera Fab 3
+  province: kestria_east_ossen
+  owner: corp_tessera
+  recipe: legacy_wafer_28nm
+  capacity: 1200
+  efficiency: 0.94
+  dual_use: false
+  experience_days: 780
+  power_mw: 90
+  substation: ossen_industrial
+  kind: industry
+  labour: { process_engineers: 850, technicians: 2400 }
+  damage: 0
+
+- id: ardent_controller_plant
+  name: Ardent flight controller plant
+  province: kestria_east_ossen
+  owner: corp_ardent
+  recipe: flight_controller_assembly
+  capacity: 320
+  efficiency: 0.95
+  dual_use: false
+  power_mw: 8
+  substation: ossen_industrial
+  kind: military
+  labour: { assembly_workers: 600, technicians: 100 }
+  damage: 0
+
+- id: interior_legacy_fabs
+  name: Interior legacy fabs
+  province: kestria_interior
+  owner: corp_tessera
+  recipe: legacy_wafer_28nm
+  capacity: 1800
+  efficiency: 0.94
+  dual_use: false
+  experience_days: 780
+  power_mw: 135
+  substation: interior_capital
+  kind: industry
+  labour: { process_engineers: 1275, technicians: 3600 }
+  damage: 0
+
+- id: ardent_drone_line
+  name: Ardent drone line
+  province: kestria_interior
+  owner: corp_ardent
+  recipe: fpv_strike_drone_mk2
+  capacity: 300
+  efficiency: 0.95
+  dual_use: false
+  power_mw: 12
+  substation: interior_capital
+  kind: military
+  labour: { assembly_workers: 1500, software_engineers: 200 }
+  damage: 0
+
+- id: kestria_motor_works
+  name: Kestria motor works
+  province: kestria_interior
+  owner: corp_ardent
+  recipe: motor_assembly
+  capacity: 1300
+  efficiency: 0.95
+  dual_use: false
+  power_mw: 20
+  substation: interior_north
+  kind: military
+  labour: { assembly_workers: 900 }
+  damage: 0
+
+- id: kestria_cell_plant
+  name: Kestria cell plant
+  province: kestria_interior
+  owner: corp_voltane
+  recipe: cell_line
+  capacity: 20000
+  efficiency: 0.95
+  dual_use: false
+  power_mw: 60
+  substation: interior_south
+  kind: industry
+  labour: { assembly_workers: 1200, technicians: 200 }
+  damage: 0
+
+- id: kestria_thermal_optics
+  name: Kestria thermal optics
+  province: kestria_interior
+  owner: corp_ardent
+  recipe: thermal_camera_assembly
+  capacity: 320
+  efficiency: 0.95
+  dual_use: false
+  power_mw: 5
+  substation: interior_capital
+  kind: military
+  labour: { assembly_workers: 200, technicians: 50 }
+  damage: 0
+
+- id: kestria_rf_works
+  name: Kestria radio works
+  province: kestria_interior
+  owner: corp_ardent
+  recipe: rf_module_assembly
+  capacity: 320
+  efficiency: 0.95
+  dual_use: false
+  power_mw: 5
+  substation: interior_capital
+  kind: military
+  labour: { assembly_workers: 150, technicians: 50 }
+  damage: 0
+
+- id: kestria_rf_chip_line
+  name: Kestria RF chip line
+  province: kestria_interior
+  owner: corp_tessera
+  recipe: gallium_rf_chip_line
+  capacity: 3000
+  efficiency: 0.95
+  dual_use: false
+  power_mw: 10
+  substation: interior_capital
+  kind: industry
+  labour: { process_engineers: 100, technicians: 150 }
+  damage: 0

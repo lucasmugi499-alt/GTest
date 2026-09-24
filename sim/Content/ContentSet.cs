@@ -1,22 +1,38 @@
 namespace Cascade.Sim.Content;
 
 /// <summary>Everything loaded from the /content folder for one campaign.</summary>
-public sealed record ContentSet(string Root, Balance Balance, ScenarioDef Scenario)
+public sealed record ContentSet(string Root, Balance Balance, Catalog Catalog, ScenarioDef Scenario)
 {
     public const string BalanceFile = "balance.yaml";
     public const string DefaultScenario = "veyl_crossing";
 
     public static ContentSet Load(string contentDir, string scenario = DefaultScenario)
     {
-        var balanceNode = ContentNode.LoadFile(Path.Combine(contentDir, BalanceFile));
-        var balance = Balance.Read(balanceNode);
-        balanceNode.EnsureAllUsed();
+        var balance = ReadStrict(Path.Combine(contentDir, BalanceFile), Balance.Read);
 
-        var scenarioNode = ContentNode.LoadFile(Path.Combine(contentDir, "scenarios", scenario + ".yaml"));
-        var scenarioDef = ScenarioDef.Read(scenarioNode);
-        scenarioNode.EnsureAllUsed();
+        var goods = ContentNode.LoadFile(Path.Combine(contentDir, "goods.yaml"));
+        var recipes = ContentNode.LoadFile(Path.Combine(contentDir, "recipes.yaml"));
+        var designs = ContentNode.LoadFile(Path.Combine(contentDir, "designs.yaml"));
+        var catalog = Catalog.Read(goods, recipes, designs);
+        goods.EnsureAllUsed(); recipes.EnsureAllUsed(); designs.EnsureAllUsed();
 
-        return new ContentSet(contentDir, balance, scenarioDef);
+        var dir = Path.Combine(contentDir, "scenarios", scenario);
+        var sc = ContentNode.LoadFile(Path.Combine(dir, "scenario.yaml"));
+        var fac = ContentNode.LoadFile(Path.Combine(dir, "facilities.yaml"), wrapListAs: "facilities");
+        var grid = ContentNode.LoadFile(Path.Combine(dir, "grid.yaml"));
+        var trade = ContentNode.LoadFile(Path.Combine(dir, "trade.yaml"));
+        var scenarioDef = ScenarioDef.Read(sc, fac, grid, trade, catalog);
+        foreach (var n in new[] { sc, fac, grid, trade }) n.EnsureAllUsed();
+
+        return new ContentSet(contentDir, balance, catalog, scenarioDef);
+    }
+
+    private static T ReadStrict<T>(string file, Func<ContentNode, T> read)
+    {
+        var node = ContentNode.LoadFile(file);
+        var value = read(node);
+        node.EnsureAllUsed();
+        return value;
     }
 
     /// <summary>

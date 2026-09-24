@@ -1,0 +1,91 @@
+# The Veyl Crossing (concept doc, Sample scenario 1). Entity IDs follow the order of each list.
+# Facilities, the power grid and trade routes live in the other files in this folder.
+id: veyl_crossing
+name: The Veyl Crossing
+start_date: 2031-03-03        # D-004: Day 0 is Monday 3 March 2031
+last_day: 90                  # D-018: Day 0 through Day 90 inclusive
+default_seed: 20310303
+player: kestria
+
+nations:
+  - id: kestria
+    name: Republic of Kestria
+    doctrine: 0.46            # j: target stock = 7 + 83j ≈ 45 days of burn (spec Days of Cover and doctrine)
+    spare_transformers: 1     # in reserve; restore a damaged substation in 14 days (spec Substations)
+    mobile_substations: 2     # mobile emergency units: 30% capacity in 7 days
+  - id: varan
+    name: Varan Union
+    doctrine: 0.5
+    spare_transformers: 4
+    mobile_substations: 4
+
+# D-005: two provinces in full detail, Kestria Interior and Varan as aggregate blocks.
+#   corruption          0-100 (spec Data model: Province)
+#   labour              skilled labour pools, people (concept: People as inputs)
+#   road_access         refuelling backup generators needs road access (spec Blackout clocks)
+#   refuel_t_per_hour   diesel the province's tanker trucks can deliver to backup generators
+provinces:
+  - id: kestria_east_ossen
+    name: Ossen East
+    owner: kestria
+    detail: full
+    corruption: 18
+    labour: { process_engineers: 900, technicians: 2600, grid_linemen: 1200, assembly_workers: 800 }
+    road_access: true
+    refuel_t_per_hour: 1.5
+  - id: veyl
+    name: Veyl
+    owner: kestria
+    detail: full
+    corruption: 26
+    labour: { grid_linemen: 80 }
+    road_access: true
+    refuel_t_per_hour: 0.5
+  - id: kestria_interior
+    name: Kestria Interior
+    owner: kestria
+    detail: block
+    corruption: 15
+    labour: { process_engineers: 1400, technicians: 4000, grid_linemen: 6000, assembly_workers: 4000, software_engineers: 5000 }
+    road_access: true
+    refuel_t_per_hour: 30
+  - id: varan_core
+    name: Varan
+    owner: varan
+    detail: block
+    corruption: 34
+    labour: {}
+    road_access: true
+    refuel_t_per_hour: 0
+
+# National Days of Cover at Day 0, stock plus imports in transit (D-006). The concept's readout: magnets 45.
+# Stock is spread across provinces in proportion to where each good is used.
+initial_cover_days:
+  wafer_blank: 40
+  neon_gas: 60
+  legacy_chip: 30
+  gallium: 40
+  gallium_rf_chip: 20
+  germanium_optic: 50
+  battery_lithium: 35
+  li_ion_cell: 20
+  rare_earth_magnet: 45
+  brushless_motor: 20
+  flight_controller: 22
+  thermal_camera: 25
+  rf_module: 25
+  diesel: 30
+
+# Final demand that isn't a facility's input: civilian industry, households, transport. Units per day.
+# kind sets the default priority tier (balance.yaml: economy.priority).
+demand:
+  - { province: kestria_interior,   good: legacy_chip,       per_day: 1_200_000, kind: industry }
+  - { province: kestria_east_ossen, good: legacy_chip,       per_day: 300_000,   kind: industry }
+  - { province: kestria_interior,   good: rare_earth_magnet, per_day: 2_000,     kind: industry }
+  - { province: kestria_interior,   good: li_ion_cell,       per_day: 17_500,    kind: industry }
+  - { province: kestria_interior,   good: gallium,           per_day: 4,         kind: industry }
+  - { province: kestria_interior,   good: gallium_rf_chip,   per_day: 2_280,     kind: industry }
+  - { province: kestria_interior,   good: germanium_optic,   per_day: 80,        kind: industry }
+  - { province: kestria_interior,   good: diesel,            per_day: 7_000,     kind: industry }
+  - { province: kestria_east_ossen, good: diesel,            per_day: 1_500,     kind: industry }
+  - { province: veyl,               good: diesel,            per_day: 200,       kind: industry }

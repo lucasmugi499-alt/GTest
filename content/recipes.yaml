@@ -1,0 +1,47 @@
+# Recipes (spec Data model: Recipe). Inputs are per unit of output (per wafer start for fabs).
+#   line     line type; switching to a recipe on the same line type retools at similarity 0.8, else 0.3
+#   fab      legacy | leading: the fab yield curve applies to outputs (spec Fab yield). Omit for other lines.
+#   design   the drone/munition design this line builds (spec Countermeasure decay). Omit if none.
+
+legacy_wafer_28nm:
+  line: fab_legacy
+  fab: legacy
+  inputs:  { wafer_blank: 1, neon_gas: 0.02 }
+  outputs: { legacy_chip: 600 }          # chips per good wafer
+
+gallium_rf_chip_line:
+  line: rf_fab
+  inputs:  { gallium: 0.002 }
+  outputs: { gallium_rf_chip: 1 }
+
+motor_assembly:
+  line: motor_assembly
+  inputs:  { rare_earth_magnet: 0.05 }
+  outputs: { brushless_motor: 1 }
+
+cell_line:
+  line: cell_line
+  inputs:  { battery_lithium: 0.02 }
+  outputs: { li_ion_cell: 1 }
+
+flight_controller_assembly:
+  line: electronics_assembly
+  inputs:  { legacy_chip: 6 }
+  outputs: { flight_controller: 1 }
+
+thermal_camera_assembly:
+  line: electronics_assembly
+  inputs:  { germanium_optic: 1, legacy_chip: 2 }
+  outputs: { thermal_camera: 1 }
+
+rf_module_assembly:
+  line: electronics_assembly
+  inputs:  { gallium_rf_chip: 2, legacy_chip: 1 }
+  outputs: { rf_module: 1 }
+
+# The drone bill of materials from the concept doc (Content as data).
+fpv_strike_drone_mk2:
+  line: drone_assembly
+  design: fpv_strike_mk2
+  inputs:  { brushless_motor: 4, li_ion_cell: 6, flight_controller: 1, thermal_camera: 1, rf_module: 1 }
+  outputs: { fpv_strike_drone: 1 }

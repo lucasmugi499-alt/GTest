@@ -29,7 +29,8 @@ public sealed class ContentNode
 
     public string Path => _path;
 
-    public static ContentNode LoadFile(string filePath)
+    /// <param name="wrapListAs">If the file's top level is a list, present it as a mapping with this one key.</param>
+    public static ContentNode LoadFile(string filePath, string? wrapListAs = null)
     {
         if (!File.Exists(filePath)) throw new ContentException($"Content file not found: {filePath}");
         var stream = new YamlStream();
@@ -41,8 +42,11 @@ public sealed class ContentNode
                 throw new ContentException($"{System.IO.Path.GetFileName(filePath)}:{e.Start.Line}: YAML error: {e.Message}");
             }
         }
-        if (stream.Documents.Count == 0 || stream.Documents[0].RootNode is not YamlMappingNode root)
-            throw new ContentException($"{filePath}: expected a YAML mapping at the top level.");
+        var top = stream.Documents.Count > 0 ? stream.Documents[0].RootNode : null;
+        if (wrapListAs is not null && top is YamlSequenceNode seq)
+            top = new YamlMappingNode(new YamlScalarNode(wrapListAs), seq);
+        if (top is not YamlMappingNode root)
+            throw new ContentException($"{filePath}: expected a YAML {(wrapListAs is null ? "mapping" : "list")} at the top level.");
         return new ContentNode(root, System.IO.Path.GetFileName(filePath), "");
     }
 

@@ -9,11 +9,14 @@ public class ContentTests : IDisposable
 
     public ContentTests()
     {
-        Directory.CreateDirectory(Path.Combine(_dir, "scenarios"));
         // Start from a copy of the real content so each test changes one thing.
         var repo = ContentSet.FindContentDir();
-        File.Copy(Path.Combine(repo, "balance.yaml"), Path.Combine(_dir, "balance.yaml"));
-        File.Copy(Path.Combine(repo, "scenarios", "veyl_crossing.yaml"), Path.Combine(_dir, "scenarios", "veyl_crossing.yaml"));
+        foreach (var file in Directory.GetFiles(repo, "*.yaml", SearchOption.AllDirectories))
+        {
+            var target = Path.Combine(_dir, Path.GetRelativePath(repo, file));
+            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+            File.Copy(file, target);
+        }
     }
 
     public void Dispose() => Directory.Delete(_dir, recursive: true);
@@ -64,9 +67,9 @@ public class ContentTests : IDisposable
     [Fact]
     public void BadNumberNamesFileAndKey()
     {
-        Edit("scenarios/veyl_crossing.yaml", "corruption: 26", "corruption: 26.12345");
+        Edit("scenarios/veyl_crossing/scenario.yaml", "corruption: 26", "corruption: 26.12345");
         var e = Assert.Throws<ContentException>(() => ContentSet.Load(_dir));
-        Assert.Contains("veyl_crossing.yaml:", e.Message);
+        Assert.Contains("scenario.yaml:", e.Message);
         Assert.Contains("provinces[1].corruption", e.Message);
         Assert.Contains("more than 4 decimal places", e.Message);
     }
@@ -74,7 +77,7 @@ public class ContentTests : IDisposable
     [Fact]
     public void UnknownOwnerIsAnError()
     {
-        Edit("scenarios/veyl_crossing.yaml", "owner: varan", "owner: atlantis");
+        Edit("scenarios/veyl_crossing/scenario.yaml", "owner: varan", "owner: atlantis");
         var e = Assert.Throws<ContentException>(() => ContentSet.Load(_dir));
         Assert.Contains("unknown owner 'atlantis'", e.Message);
     }
