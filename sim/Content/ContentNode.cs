@@ -6,6 +6,38 @@ namespace Cascade.Sim.Content;
 
 public sealed class ContentException(string message) : Exception(message);
 
+/// <summary>A YAML value as a plain tree. <see cref="Where"/> names the file, line and key for error messages.</summary>
+public abstract record CValue(string Where)
+{
+    public ContentException Error(string what) => new($"{Where}: {what}");
+
+    public string Text => this is CScalar s ? s.Value : throw Error("expected a single value");
+    public Fixed Fixed() { try { return Core.Fixed.Parse(Text); } catch (FormatException e) { throw Error(e.Message); } }
+    public Fine Fine() { try { return Core.Fine.Parse(Text); } catch (FormatException e) { throw Error(e.Message); } }
+    public int Int() => int.TryParse(Text, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var i) ? i : throw Error($"expected a whole number, got '{Text}'");
+    public bool Bool() => Text switch { "true" => true, "false" => false, var t => throw Error($"expected true or false, got '{t}'") };
+
+    /// <summary>The value as a list: a list stays a list; a single value or mapping becomes a list of one.</summary>
+    public IReadOnlyList<CValue> Items => this is CList l ? l.Values : [this];
+
+    public CMap Map => this as CMap ?? throw Error("expected a mapping");
+}
+
+public sealed record CScalar(string Value, string At) : CValue(At);
+public sealed record CList(IReadOnlyList<CValue> Values, string At) : CValue(At);
+public sealed record CMap(IReadOnlyList<(string Key, CValue Value)> Entries, string At) : CValue(At)
+{
+    public CValue this[string key] => Entries.FirstOrDefault(e => e.Key == key).Value ?? throw Error($"missing key '{key}'");
+    public bool Has(string key) => Entries.Any(e => e.Key == key);
+
+    /// <summary>Throws if the mapping has keys other than these.</summary>
+    public CMap Only(params string[] keys)
+    {
+        foreach (var (k, _) in Entries) if (!keys.Contains(k)) throw Error($"unknown key '{k}' (expected {string.Join(", ", keys)})");
+        return this;
+    }
+}
+
 /// <summary>
 /// A strict view over one YAML mapping. Every read names a required key; reading a missing key, or leaving
 /// a key in the file that nothing read, is an error (D-021). That is how "no tunable number is hard-coded"
@@ -51,6 +83,20 @@ public sealed class ContentNode
     }
 
     public bool Has(string key) => _map.Children.ContainsKey(new YamlScalarNode(key));
+
+    /// <summary>Reads a value of any shape (scalar, list or mapping) as a plain tree, for effect maps and the like.</summary>
+    public CValue Value(string key) => ToValue(Get(key), Join(key));
+
+    /// <summary>All keys of this mapping with their values as plain trees (marks every key read).</summary>
+    public IReadOnlyList<(string Key, CValue Value)> Entries() => Keys().Select(k => (k, Value(k))).ToList();
+
+    private CValue ToValue(YamlNode node, string path) => node switch
+    {
+        YamlScalarNode s => new CScalar(s.Value ?? "", $"{_file}:{node.Start.Line}: '{path}'"),
+        YamlSequenceNode q => new CList(q.Children.Select((c, i) => ToValue(c, $"{path}[{i}]")).ToList(), $"{_file}:{node.Start.Line}: '{path}'"),
+        YamlMappingNode m => new CMap(m.Children.Select(kv => (((YamlScalarNode)kv.Key).Value!, ToValue(kv.Value, $"{path}.{((YamlScalarNode)kv.Key).Value}"))).ToList(), $"{_file}:{node.Start.Line}: '{path}'"),
+        _ => throw new ContentException($"{_file}:{node.Start.Line}: '{path}': unsupported YAML node"),
+    };
 
     public ContentNode Child(string key)
     {

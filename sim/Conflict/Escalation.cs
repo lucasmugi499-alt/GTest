@@ -297,7 +297,7 @@ public static class ConflictActions
                 if (a.FallbackOperation is not null)
                 {
                     int fb = ctx.Content.Scenario.Conflict.Operation(a.FallbackOperation);
-                    if (Cyber.CanUse(ctx, fb, a.FallbackEffect ?? "disrupt")) Cyber.Use(ctx, fb, a.FallbackEffect ?? "disrupt");
+                    if (Cyber.CanUse(ctx, fb, a.FallbackEffect ?? "disrupt")) Cyber.Use(ctx, fb, a.FallbackEffect ?? "disrupt", escalate: false);
                 }
                 break;
             }

@@ -39,8 +39,12 @@ public enum StepResult
 public sealed class Simulation
 {
     /// <summary>Phases allowed to run hourly: spec's 2, 5, 7, 8, plus orders and timed events (D-019).</summary>
+    /// <summary>
+    /// Phases allowed to run hourly: spec's 2, 5, 7, 8, plus orders and timed events (D-019) and the narrative, so
+    /// arc beats land in the hour they happen (spec: one major per 12 hours in Crisis Time implies hourly firing, D-040).
+    /// </summary>
     public static readonly PhaseId[] HourlyPhases =
-        [PhaseId.Orders, PhaseId.ScheduledEvents, PhaseId.GridDispatch, PhaseId.Consumption, PhaseId.Operations, PhaseId.Information];
+        [PhaseId.Orders, PhaseId.ScheduledEvents, PhaseId.GridDispatch, PhaseId.Consumption, PhaseId.Operations, PhaseId.Information, PhaseId.Narrative];
 
     private readonly IPhase[] _phases;
     private readonly IPeriodicSystem[] _weekly;
@@ -60,6 +64,7 @@ public sealed class Simulation
     public SimWorld World { get; }
     public OrderQueue Orders { get; } = new();
     public EventQueue Events { get; } = new();
+    public Narrative.NarrativeEngine Narrative { get; }
 
     /// <summary>The day currently being played (or about to be).</summary>
     public int Day { get; private set; }
@@ -80,6 +85,7 @@ public sealed class Simulation
         World = new SimWorld(content);
         EconomySetup.Initialize(World, content);
         SocietySetup.Initialize(World, content, seed);
+        Narrative = new Narrative.NarrativeEngine(World, content);
 
         _ordersPhase = new OrdersPhase(Orders);
         _phases = new IPhase[12];
@@ -118,6 +124,8 @@ public sealed class Simulation
         PhaseId.Operations => new OperationsPhase(),
         PhaseId.Information => new InformationPhase(),
         PhaseId.Society => new SocietyPhase(Content.Balance),
+        PhaseId.Narrative => new Narrative.DirectorPhase(),
+        PhaseId.Record => new Narrative.RecordPhase(),
         _ when HourlyPhases.Contains(id) => new StubHourlyPhase(id),
         _ => new StubPhase(id),
     };
@@ -262,6 +270,14 @@ public sealed class Simulation
         return false;
     }
 
+    /// <summary>A read-only context for the UI and tools to evaluate facts and choice availability between steps.</summary>
+    public TickContext ReadContext() => Hour >= 0 ? Context(Hour, (TickSlot)Hour) : Context(-1, TickSlot.Daily);
+
+    /// <summary>Storylets waiting for the player's answer, oldest first.</summary>
+    public IEnumerable<Narrative.StoryletInstance> PendingDecisions => World.Storylets.Instances.Where(i => i.Pending);
+
+    public bool ChoiceAvailable(Narrative.StoryletInstance inst, int choice) => Narrative.Available(ReadContext(), inst, choice);
+
     private TickContext Context(int hour, TickSlot slot) => new()
     {
         Content = Content,
@@ -274,6 +290,7 @@ public sealed class Simulation
         Slot = slot,
         CrisisProvinces = _crisisToday,
         Events = Events,
+        Narrative = Narrative,
     };
 
     /// <summary>

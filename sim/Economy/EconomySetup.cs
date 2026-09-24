@@ -34,7 +34,7 @@ public static class EconomySetup
                 var inTransitWindow = Fixed.Zero;
                 for (int r = 0; r < w.Imports.Count; r++)
                 {
-                    if (w.Imports.Good[r] != g || w.Provinces.Owner[w.Imports.To[r]] != n || remaining <= Fixed.Zero) continue;
+                    if (w.Imports.Good[r] != g || w.Provinces.Owner[w.Imports.To[r]] != n || remaining <= Fixed.Zero || w.Imports.Closed[r]) continue;
                     var flow = Fixed.Min(remaining, w.Imports.CapacityPerDay[r]);
                     remaining -= flow;
                     for (int d = 0; d < w.Imports.LeadDays[r]; d++)

@@ -25,7 +25,8 @@ public static class Cyber
     public static Fixed DisruptionHours(Balance b, Fixed access, Fixed payload, Fine analog) =>
         (b.Cyber.DisruptionBaseHours * (access / Fixed.FromInt(50)) * payload).Times(Fine.One - analog);
 
-    public static void Use(TickContext ctx, int op, string effect)
+    /// <param name="escalate">False for D-014's fallback: the caught attempt is the escalation (+4); the fallback only reuses the effect.</param>
+    public static void Use(TickContext ctx, int op, string effect, bool escalate = true)
     {
         var w = ctx.World;
         var ops = w.Operations;
@@ -57,7 +58,8 @@ public static class Cyber
         ops.State.Set(op, (int)OperationState.Used);
         ops.UsedDay.Set(op, ctx.Day);
         ops.Attribution.Set(op, Fine.Zero);
-        Escalation.Record(ctx, attacker, victim, "disruptive_cyber", $"Cyber attack: {what}.");
+        if (escalate) Escalation.Record(ctx, attacker, victim, "disruptive_cyber", $"Cyber attack: {what}.");
+        else ctx.World.Log.Add(ctx.Day, ctx.Hour, "cyber", $"Cyber attack: {what}.", ctx.World.Nations.Keys[attacker], def.Id);
 
         // Spec Burn: every target on the same vendor systems patches with 50% chance within 30 days.
         var rng = ctx.Rng(SystemId.Operations, EntityRef.Of(EntityKind.Operation, op));

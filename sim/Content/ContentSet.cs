@@ -23,8 +23,11 @@ public sealed record ContentSet(string Root, Balance Balance, Catalog Catalog, S
         var trade = ContentNode.LoadFile(Path.Combine(dir, "trade.yaml"));
         var society = ContentNode.LoadFile(Path.Combine(dir, "society.yaml"));
         var conflict = ContentNode.LoadFile(Path.Combine(dir, "conflict.yaml"));
-        var scenarioDef = ScenarioDef.Read(sc, fac, grid, trade, society, conflict, catalog);
-        foreach (var n in new[] { sc, fac, grid, trade, society, conflict }) n.EnsureAllUsed();
+        var characters = ContentNode.LoadFile(Path.Combine(dir, "characters.yaml"), wrapListAs: "characters");
+        var storylets = ContentNode.LoadFile(Path.Combine(dir, "storylets.yaml"));
+        var chronicle = ContentNode.LoadFile(Path.Combine(dir, "chronicle.yaml"));
+        var scenarioDef = ScenarioDef.Read(sc, fac, grid, trade, society, conflict, characters, storylets, chronicle, catalog);
+        foreach (var n in new[] { sc, fac, grid, trade, society, conflict, characters, storylets, chronicle }) n.EnsureAllUsed();
 
         return new ContentSet(contentDir, balance, catalog, scenarioDef);
     }

@@ -363,6 +363,8 @@ public sealed class ImportStore : Store
 
     /// <summary>Stopped by the source's export controls (spec Supply shock).</summary>
     public Column<bool> Blocked { get; }
+    /// <summary>Not in use (content "closed"), until a decision opens it.</summary>
+    public Column<bool> Closed { get; }
     public Column<Fixed> ShippedToday { get; }
     /// <summary>Share of capacity still available: sea routes lose shipping lines that skip the port (spec War-risk insurance).</summary>
     public Column<Fine> CapacityFactor { get; }
@@ -377,6 +379,8 @@ public sealed class ImportStore : Store
         CapacityPerDay = s.Imports.Select(i => i.CapacityPerDay).ToArray();
         Sea = s.Imports.Select(i => i.Sea).ToArray();
         Blocked = Col<bool>("blocked");
+        Closed = Col<bool>("closed");
+        for (int i = 0; i < Count; i++) Closed.Init(i, s.Imports[i].Closed);
         ShippedToday = Col<Fixed>("shipped_today");
         CapacityFactor = Col<Fine>("capacity_factor");
         for (int i = 0; i < Count; i++) CapacityFactor.Init(i, Fine.One);

@@ -35,7 +35,7 @@ public sealed class LogisticsPhase : IPhase
             int to = im.To[r];
             int nation = w.Provinces.Owner[to];
             var qty = Fixed.Zero;
-            if (!im.Blocked[r])
+            if (!im.Blocked[r] && !im.Closed[r])
             {
                 var position = Fixed.Zero;
                 var ema = Fixed.Zero;
@@ -47,7 +47,8 @@ public sealed class LogisticsPhase : IPhase
                 }
                 var target = ema * EconomyRules.TargetDays(b, w.Nations.Doctrine[nation]);
                 qty = ema + (target - position) / b.Economy.ImportReplenishDays;
-                qty = Fixed.Clamp(qty, Fixed.Zero, im.CapacityPerDay[r]);
+                // Sea routes lose the capacity of shipping lines that skip the port (spec War-risk insurance).
+                qty = Fixed.Clamp(qty, Fixed.Zero, im.CapacityPerDay[r].Times(im.CapacityFactor[r]));
             }
             im.ShippedToday.Set(r, qty);
             if (qty > Fixed.Zero)

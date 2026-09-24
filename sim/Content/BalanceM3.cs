@@ -166,7 +166,7 @@ public sealed record EscalationBalance(
     }
 }
 
-public sealed record MarketsBalance(int InsuranceFromRung, Fixed InsuranceSkipFromMultiplier, Fine InsuranceSkipChance)
+public sealed record MarketsBalance(int InsuranceFromRung, Fixed InsuranceSkipFromMultiplier, Fine InsuranceSkipChance, string GuaranteeFlag)
 {
-    public static MarketsBalance Read(ContentNode n) => new(n.Int("insurance_from_rung"), n.Fixed("insurance_skip_from_multiplier"), n.Fine("insurance_skip_chance"));
+    public static MarketsBalance Read(ContentNode n) => new(n.Int("insurance_from_rung"), n.Fixed("insurance_skip_from_multiplier"), n.Fine("insurance_skip_chance"), n.Str("guarantee_flag"));
 }

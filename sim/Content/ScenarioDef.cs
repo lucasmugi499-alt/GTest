@@ -26,7 +26,7 @@ public sealed record SubstationDef(string Id, string Province, Fixed CapacityMw)
 public sealed record TieLineDef(string A, string B, Fixed CapacityMw);
 public sealed record LoadDef(string Id, string Substation, string Kind, Fixed DemandMw, long Population, Fixed? TankHours, Fixed DieselPerHour);
 public sealed record EdgeDef(string A, string B, int LeadDays, IReadOnlyList<Fixed> CapacityTonnesByClass);
-public sealed record ImportDef(string Good, string From, string To, int LeadDays, Fixed CapacityPerDay, bool Sea);
+public sealed record ImportDef(string Good, string From, string To, int LeadDays, Fixed CapacityPerDay, bool Sea, bool Closed);
 public sealed record DemandDef(string Province, string Good, Fixed PerDay, string Kind);
 
 /// <summary>A scenario's starting world. Entity IDs are assigned in file order (D-022).</summary>
@@ -54,9 +54,11 @@ public sealed record ScenarioDef(
 
     public SocietyDef Society { get; init; } = null!;
     public ConflictDef Conflict { get; init; } = null!;
+    public Cascade.Sim.Narrative.NarrativeDef Narrative { get; init; } = null!;
+    public ChronicleDef Chronicle { get; init; } = null!;
 
     public static ScenarioDef Read(ContentNode scenario, ContentNode facilities, ContentNode grid, ContentNode trade,
-        ContentNode society, ContentNode conflict, Catalog catalog)
+        ContentNode society, ContentNode conflict, ContentNode characters, ContentNode storylets, ContentNode chronicle, Catalog catalog)
     {
         var nations = scenario.List("nations").Select(x => new NationDef(
             x.Str("id"), x.Str("name"), x.Str("adjective"), x.Fine("doctrine"), x.Int("spare_transformers"), x.Int("mobile_substations"))).ToList();
@@ -112,7 +114,8 @@ public sealed record ScenarioDef(
                 [c.Fixed("bulk"), c.Fixed("container"), c.Fixed("fuel"), c.Fixed("high_value")]);
         }).ToList();
         var imports = trade.List("imports").Select(x => new ImportDef(
-            x.Str("good"), x.Str("from"), x.Str("to"), x.Int("lead_days"), x.Fixed("capacity_per_day"), x.Bool("sea"))).ToList();
+            x.Str("good"), x.Str("from"), x.Str("to"), x.Int("lead_days"), x.Fixed("capacity_per_day"), x.Bool("sea"),
+            x.Has("closed") && x.Bool("closed"))).ToList();
 
         var def = new ScenarioDef(
             scenario.Str("id"), scenario.Str("name"), scenario.Date("start_date"), scenario.Int("last_day"),
@@ -121,6 +124,8 @@ public sealed record ScenarioDef(
         {
             Society = SocietyDef.Read(society),
             Conflict = ConflictDef.Read(conflict),
+            Narrative = Cascade.Sim.Narrative.NarrativeDef.Read(characters, storylets),
+            Chronicle = ChronicleDef.Read(chronicle),
         };
         def.Validate(catalog);
         def.ValidateM3(catalog);
@@ -214,6 +219,8 @@ public sealed record ScenarioDef(
         }
         if (!provinces.Contains(co.Front.Province)) Fail("front has unknown province");
         catalog.Good(co.Front.DroneGood);
+        foreach (var g in new[] { Chronicle.ChipsGood, Chronicle.DronesGood, Chronicle.MagnetsGood }) catalog.Good(g);
+        catalog.Design(Chronicle.DroneDesign);
         foreach (var side in co.Front.Sides)
         {
             if (!nations.Contains(side.Nation)) Fail($"front side '{side.Nation}' is not a nation");

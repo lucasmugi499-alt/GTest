@@ -36,6 +36,12 @@ public sealed class SimWorld : ICommittable, IStateHashable
     public ShippingStore Shipping { get; }
     public EventLog Log { get; } = new();
 
+    public Narrative.FlagStore Flags { get; }
+    public Narrative.CharacterStore Characters { get; }
+    public Narrative.StoryletState Storylets { get; }
+    public Narrative.SeedStore Seeds { get; }
+    public Narrative.DirectorStore Director { get; }
+
     private readonly ICommittable[] _commit;
     private readonly IStateHashable[] _hash;
 
@@ -70,9 +76,16 @@ public sealed class SimWorld : ICommittable, IStateHashable
         Escalation = new EscalationStore(Nations.Count, s.Conflict.StartMeter);
         Shipping = new ShippingStore(s);
 
+        Flags = new Narrative.FlagStore(s.Narrative);
+        Characters = new Narrative.CharacterStore(s.Narrative);
+        Storylets = new Narrative.StoryletState(s.Narrative);
+        Seeds = new Narrative.SeedStore(s.Narrative);
+        Director = new Narrative.DirectorStore();
+
         // Fixed order: this is the order state commits and hashes in.
         _commit = [Nations, Provinces, Labour, Stocks, Facilities, Substations, Loads, Plants, TieLines, Edges, Imports, Demand, Designs,
-                   Politics, Segments, Factions, Precedents, Corporations, Narratives, Operations, Brigades, Front, Escalation, Shipping];
+                   Politics, Segments, Factions, Precedents, Corporations, Narratives, Operations, Brigades, Front, Escalation, Shipping,
+                   Flags, Characters, Storylets, Seeds, Director];
         _hash = [.. _commit.Cast<IStateHashable>(), Shipments, Log];
     }
 

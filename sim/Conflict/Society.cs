@@ -443,11 +443,13 @@ public sealed class MarketsSystem : IPeriodicSystem
         var multiplier = rung >= m.InsuranceFromRung ? Fixed.FromInt(1 + rung) : Fixed.One;
         w.Politics.InsuranceMultiplier.Set(n, multiplier);
 
+        // A state war-risk guarantee (a storylet decision) keeps every line calling.
+        bool guaranteed = w.Flags.TryIdOf(m.GuaranteeFlag, out int flag) && w.Flags.Value[flag] > Fixed.Zero;
         int calling = 0;
         for (int line = 0; line < w.Shipping.Count; line++)
         {
             bool call = true;
-            if (multiplier >= m.InsuranceSkipFromMultiplier)
+            if (multiplier >= m.InsuranceSkipFromMultiplier && !guaranteed)
                 call = !ctx.Rng(SystemId.WeeklyMarkets, EntityRef.Of(EntityKind.ShippingLine, line)).Chance(m.InsuranceSkipChance);
             w.Shipping.Calling.Set(line, call);
             if (call) calling++;

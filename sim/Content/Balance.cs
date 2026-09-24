@@ -18,7 +18,9 @@ public sealed record Balance(
     MilitaryBalance Military,
     MobilizationBalance Mobilization,
     EscalationBalance Escalation,
-    MarketsBalance Markets)
+    MarketsBalance Markets,
+    NarrativeBalance Narrative,
+    ChronicleBalance Chronicle)
 {
     public static Balance Read(ContentNode root) => new(
         SimBalance.Read(root.Child("sim")),
@@ -32,7 +34,9 @@ public sealed record Balance(
         MilitaryBalance.Read(root.Child("military")),
         MobilizationBalance.Read(root.Child("mobilization")),
         EscalationBalance.Read(root.Child("escalation")),
-        MarketsBalance.Read(root.Child("markets")));
+        MarketsBalance.Read(root.Child("markets")),
+        NarrativeBalance.Read(root.Child("narrative")),
+        ChronicleBalance.Read(root.Child("chronicle")));
 }
 
 public sealed record SimBalance(CrisisBalance Crisis, int HashCheckIntervalDays)

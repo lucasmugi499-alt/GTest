@@ -21,14 +21,15 @@ public sealed class InformationPhase : IHourlyPhase
     {
         if (!Information.HourlyToday(ctx)) return;
         Information.Step(ctx.World, ctx.Balance, ctx.Content, ctx.Day, Fine.Ratio(1, 24), write: true);
-        Information.UpdateRumorVelocity(ctx);
+        // Hourly only the near term matters (the crisis signal looks 12 hours ahead); the daily pass looks the full horizon.
+        Information.UpdateRumorVelocity(ctx, ctx.Balance.Information.RumorCrisisHours * 4);
     }
 
     public void RunDaily(TickContext ctx)
     {
         if (!Information.HourlyToday(ctx)) Information.Step(ctx.World, ctx.Balance, ctx.Content, ctx.Day, Fine.One, write: true);
         Information.ApplyEstablishment(ctx);
-        Information.UpdateRumorVelocity(ctx);
+        Information.UpdateRumorVelocity(ctx, ctx.Balance.Information.RumorHorizonHours);
     }
 }
 
@@ -166,7 +167,7 @@ public static class Information
     /// Rumor Velocity (spec): forecast hours until any segment not yet established crosses 25% belief, stepping a copy
     /// hourly with policies frozen. -1 if not within the horizon.
     /// </summary>
-    public static void UpdateRumorVelocity(TickContext ctx)
+    public static void UpdateRumorVelocity(TickContext ctx, int horizonHours)
     {
         var w = ctx.World;
         var nar = w.Narratives;
@@ -189,7 +190,7 @@ public static class Information
             if (anyOpen)
             {
                 var hour = Fine.Ratio(1, 24);
-                for (int h = 1; h <= info.RumorHorizonHours && hours < 0; h++)
+                for (int h = 1; h <= horizonHours && hours < 0; h++)
                 {
                     Step(w, ctx.Balance, ctx.Content, ctx.Day + h / 24, hour, write: false, S, E, B, R, only: n);
                     for (int s = 0; s < nar.Segments; s++)

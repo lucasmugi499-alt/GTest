@@ -19,6 +19,8 @@ public sealed class TickContext
     /// <summary>Provinces in Crisis Time today, in ID order. Hourly phases only work on these.</summary>
     public required IReadOnlyList<int> CrisisProvinces { get; init; }
     public required EventQueue Events { get; init; }
+    /// <summary>The narrative engine (blackboard, compiled effects), for phases and orders that need it.</summary>
+    public required Narrative.NarrativeEngine Narrative { get; init; }
 
     public bool IsHourly => Hour >= 0;
 

@@ -185,7 +185,7 @@ public sealed class ConsumptionPhase : IHourlyPhase
 
                 int lead = 0;
                 for (int r = 0; r < w.Imports.Count; r++)
-                    if (w.Imports.Good[r] == g && w.Provinces.Owner[w.Imports.To[r]] == n)
+                    if (w.Imports.Good[r] == g && w.Provinces.Owner[w.Imports.To[r]] == n && !w.Imports.Closed[r])
                         lead = lead == 0 ? w.Imports.LeadDays[r] : Math.Min(lead, w.Imports.LeadDays[r]);
                 int flag = doc < b.Economy.CriticalCoverDays ? 2 : doc < Fixed.FromInt(lead) ? 1 : 0;
                 stocks.Shortage.Set(at, flag);
