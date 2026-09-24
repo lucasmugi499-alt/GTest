@@ -413,7 +413,7 @@ These changes were made after running 1,000 seeds with random choices.
   - With 2, the median is about 14 days.
   - `lights_out` hands both spares out in each option.
 - **Deepfake Virality 20:** see D-038.
-  - Under the spec's γ = 0.02, every narrative settles at about 40% belief whatever the counter-measure. Counters only delay the tipping point.
+  - In the spec's model nearly every susceptible person is exposed in the end, and a Plausibility share of them (0.6 here) come to believe. After γ's slow fade, belief settles at about 40% whatever the counter-measure. Counters only delay the tipping point.
   - At 50 it tipped within a day or two of any counter, so choosing one felt meaningless.
   - At 20, the four options spread out. Left alone, it tips around Day 9. Going live also tips it around Day 9. A takedown delays it to about Day 11, and a shutdown to about Day 13.
   - This is a finding for the designer, not a fix. See ideas.md.

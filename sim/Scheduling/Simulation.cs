@@ -38,7 +38,6 @@ public enum StepResult
 /// </summary>
 public sealed class Simulation
 {
-    /// <summary>Phases allowed to run hourly: spec's 2, 5, 7, 8, plus orders and timed events (D-019).</summary>
     /// <summary>
     /// Phases allowed to run hourly: spec's 2, 5, 7, 8, plus orders and timed events (D-019) and the narrative, so
     /// arc beats land in the hour they happen (spec: one major per 12 hours in Crisis Time implies hourly firing, D-040).

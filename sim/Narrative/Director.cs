@@ -58,7 +58,7 @@ public sealed class DirectorPhase : IHourlyPhase
                 continue;
             }
             if (ctx.Day < w.Seeds.PlantedDay[i] + def.MinDelayDays) continue;
-            var rng = ctx.Rng(SystemId.Narrative, EntityRef.Of(EntityKind.Narrative, 1000 + i));
+            var rng = ctx.Rng(SystemId.Narrative, EntityRef.Of(EntityKind.Seed, i));
             if (rng.Chance(def.MonthlyChance / 30)) w.Seeds.State.Set(i, (int)SeedState.Ripe);
         }
     }
@@ -110,15 +110,17 @@ public sealed class DirectorPhase : IHourlyPhase
             if (ctx.Day - i.Day >= 7) continue;
             if (eng.Def.Storylets[i.Storylet].Tier == Tier.Major) majorsWeek++; else minorsWeek++;
         }
+        // Pending values: arc beats and the dials were updated earlier in this same pass and aren't committed yet.
+        int lastMajor = w.Director.LastMajorDay.Pending(0);
         bool crisis = ctx.CrisisProvinces.Count > 0;
-        int hoursSinceMajor = (ctx.Day - w.Director.LastMajorDay[0]) * 24;
+        int hoursSinceMajor = (ctx.Day - lastMajor) * 24;
         bool majorAllowed = majorsWeek < n.MajorsPerWeek && (!crisis || hoursSinceMajor >= n.CrisisMajorHours);
         bool minorAllowed = minorsWeek < n.MinorsPerWeek;
         if (!majorAllowed && !minorAllowed) return;
 
-        var tension = w.Director.Tension[0];
-        var debt = w.Director.NarrativeDebt[0];
-        var sincePacing = Fixed.Ratio(ctx.Day - w.Director.LastMajorDay[0], pers.MajorEveryDays);
+        var tension = w.Director.Tension.Pending(0);
+        var debt = w.Director.NarrativeDebt.Pending(0);
+        var sincePacing = Fixed.Ratio(ctx.Day - lastMajor, pers.MajorEveryDays);
         var scored = new List<(StoryletDef S, int[] Cast, Fixed U)>();
         foreach (var s in eng.Def.Storylets)
         {

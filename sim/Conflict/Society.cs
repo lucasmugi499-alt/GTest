@@ -34,7 +34,11 @@ public static class Society
         var inflation = Inflation(w, b, player);
         pol.Inflation.Set(player, inflation);
         var pricesNeed = Clamp100(so.PricesBase + so.PricesPerPoint * (so.WageGrowth - inflation));
-        bool curfew = PowerActive(w, c, player, "curfew", out var curfewDef);
+        // Active emergency powers' effects on needs (e.g. a curfew: safer streets, less dignity).
+        Fixed powerSafety = Fixed.Zero, powerDignity = Fixed.Zero;
+        var powers = c.Scenario.Society.EmergencyPowers;
+        for (int i = 0; i < powers.Count; i++)
+            if ((pol.PowersMask[player] & (1 << i)) != 0) { powerSafety += powers[i].SafetyBonus; powerDignity += powers[i].DignityPenalty; }
 
         Fixed popSat = Fixed.Zero, popAlign = Fixed.Zero, popTrust = Fixed.Zero;
         long popTotal = 0;
@@ -51,9 +55,9 @@ public static class Society
 
             // Incidents decay back toward the peacetime baseline over about a month (D-034).
             var incidents = seg.IncidentsMonth.Pending(s);
-            incidents += (so.BaselineIncidentsPer100k - incidents) / 30;
+            incidents += (so.BaselineIncidentsPer100k - incidents) / so.IncidentDecayDays;
             seg.IncidentsMonth.Set(s, incidents);
-            needs[(int)Need.Safety] = Clamp100(Fixed.Hundred - so.SafetyPerIncident * incidents + (curfew ? curfewDef!.SafetyBonus : Fixed.Zero));
+            needs[(int)Need.Safety] = Clamp100(Fixed.Hundred - so.SafetyPerIncident * incidents + powerSafety);
 
             needs[(int)Need.Connectivity] = w.Provinces.InternetShutdown[p] ? Fixed.Zero : Availability(w, p, so.ConnectivityKind, Fine.One).ToFixed() * 100;
             var water = Availability(w, p, so.WaterKind, Fine.One);
@@ -62,7 +66,7 @@ public static class Society
             // Services = 100 × average availability of water, health care and transit.
             needs[(int)Need.Services] = (water.ToFixed() + health.ToFixed() + transit) * 100 / 3;
             needs[(int)Need.Dignity] = Clamp100(so.DignityBase + so.DignityAxisFactor * (pol.AxisInformation[player] - Fixed.FromInt(50))
-                + seg.Defs[s].Identity - pol.DignityPenalty[player] - (curfew ? curfewDef!.DignityPenalty : Fixed.Zero));
+                + seg.Defs[s].Identity - pol.DignityPenalty[player] - powerDignity);
 
             var sat = Fixed.Zero;
             for (int k = 0; k < Needs.Count; k++)
@@ -200,19 +204,6 @@ public static class Society
             var avgMob = members > Fixed.Zero ? mobilization / members : Fixed.Zero;
             w.Factions.Leverage.Set(f, popShare * avgMob + w.Factions.Defs[f].Institutions);
         }
-    }
-
-    public static bool PowerActive(SimWorld w, ContentSet c, int nation, string power, out EmergencyPowerDef? def)
-    {
-        var powers = c.Scenario.Society.EmergencyPowers;
-        for (int i = 0; i < powers.Count; i++)
-            if (powers[i].Id == power)
-            {
-                def = powers[i];
-                return (w.Politics.PowersMask[nation] & (1 << i)) != 0;
-            }
-        def = null;
-        return false;
     }
 
     /// <summary>

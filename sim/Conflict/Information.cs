@@ -22,7 +22,7 @@ public sealed class InformationPhase : IHourlyPhase
         if (!Information.HourlyToday(ctx)) return;
         Information.Step(ctx.World, ctx.Balance, ctx.Content, ctx.Day, Fine.Ratio(1, 24), write: true);
         // Hourly only the near term matters (the crisis signal looks 12 hours ahead); the daily pass looks the full horizon.
-        Information.UpdateRumorVelocity(ctx, ctx.Balance.Information.RumorCrisisHours * 4);
+        Information.UpdateRumorVelocity(ctx, ctx.Balance.Information.RumorHourlyHorizonHours);
     }
 
     public void RunDaily(TickContext ctx)

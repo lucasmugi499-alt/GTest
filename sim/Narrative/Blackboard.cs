@@ -61,7 +61,7 @@ public sealed class Blackboard
             case ["rung"]: return c => Fixed.FromInt(c.Balance.Escalation.RungOf(Escalation.Meter(c.World, player, rival)));
             case ["approval"]: return c => c.World.Politics.Approval[player];
             case ["trust"]: return c => c.World.Politics.Trust[player];
-            case ["pc"]: return c => c.World.Politics.PoliticalCapital[player];
+            case ["pc"]: return c => c.World.Politics.PoliticalCapital.Pending(player); // Pending: spends earlier in this phase count
             case ["war_support"]: return c => c.World.Politics.WarSupport[player];
             case ["rally"]: return c => c.World.Politics.Rally[player];
             case ["legitimacy"]: return c => c.World.Politics.Legitimacy[player];

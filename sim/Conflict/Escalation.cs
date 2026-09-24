@@ -39,7 +39,7 @@ public static class Escalation
         w.Log.Add(ctx.Day, ctx.Hour, "escalation", text, w.Nations.Keys[actor], action, meter);
 
         // Spec War exhaustion: "Rally starts at 20 when you are attacked"; answering an attack sets Legitimacy.
-        if (def.Weight >= e.Action("disruptive_cyber").Weight)
+        if (def.Weight >= ctx.Balance.Society.RallyMinWeight)
         {
             var p = w.Politics;
             p.AttackedByRival.Set(target, true);
@@ -61,7 +61,12 @@ public static class Escalation
         value = Fixed.Max(value, Fixed.FromInt(floor));
         s.Meter.Set(s.At(a, b), value);
         s.Meter.Set(s.At(b, a), value);
-        if (weight >= ctx.Balance.Escalation.DecayBlockedByWeight)
+        // Falling back below a red line re-arms it (D-039), whatever lowered the meter.
+        var p = ctx.World.Politics;
+        if (value < p.RedLine[a]) p.RedLineCrossed.Set(a, false);
+        if (value < p.RedLine[b]) p.RedLineCrossed.Set(b, false);
+        // Only escalation blocks the weekly decay; a de-escalating step doesn't.
+        if (amount > Fixed.Zero && weight >= ctx.Balance.Escalation.DecayBlockedByWeight)
         {
             s.LastBigAction.Set(s.At(a, b), ctx.Day);
             s.LastBigAction.Set(s.At(b, a), ctx.Day);
@@ -246,14 +251,14 @@ public static class ConflictActions
                 Military.KillAtFront(ctx, target, Fixed.FromInt(a.KestrianDeaths));
                 Military.KillAtFront(ctx, actor, Fixed.FromInt(a.VaranDeaths));
                 Escalation.Record(ctx, actor, target, a.Action,
-                    $"Border clash at Veyl: {a.KestrianDeaths} {Demonym(w, target)} and {a.VaranDeaths} {Demonym(w, actor)} dead.{Note(a)}");
+                    $"Border clash at {Front(w)}: {a.KestrianDeaths} {Demonym(w, target)} and {a.VaranDeaths} {Demonym(w, actor)} dead.{Note(a)}");
                 break;
             }
             case "drone_strike":
             {
                 int b = Military.FrontBrigade(ctx, target);
                 if (b >= 0) Military.Casualties(ctx, b, w.Brigades.Strength[b].Times(a.Losses));
-                Escalation.Record(ctx, actor, target, a.Action, $"{names[actor]} drone strike on {Demonym(w, target)} positions at Veyl.");
+                Escalation.Record(ctx, actor, target, a.Action, $"{names[actor]} drone strike on {Demonym(w, target)} positions at {Front(w)}.");
                 break;
             }
             case "offensive":
@@ -261,7 +266,7 @@ public static class ConflictActions
                 for (int b = 0; b < w.Brigades.Count; b++)
                     if (w.Brigades.Nation[b] == actor && w.Brigades.Strength[b] > Fixed.Zero) w.Brigades.Posture.Set(b, (int)Posture.Attack);
                 w.Front.ActiveUntil.Set(actor, ctx.Day + a.Days);
-                Escalation.Record(ctx, actor, target, a.Action, $"{names[actor]} launches an offensive at Veyl.");
+                Escalation.Record(ctx, actor, target, a.Action, $"{names[actor]} launches an offensive at {Front(w)}.");
                 break;
             }
             case "export_controls":
@@ -293,7 +298,7 @@ public static class ConflictActions
                 // D-014: the planned attack was defused; the attempt shows up as a detected intrusion, and the
                 // attacker falls back to a weaker foothold if it has one.
                 Escalation.Record(ctx, actor, target, "cyber_intrusion_detected",
-                    $"An attempted intrusion into {ctx.Content.Scenario.Conflict.Operations[op].TargetProvince.Replace('_', ' ')} grid control is caught; {names[actor]} is blamed.");
+                    $"An attempted intrusion into {w.Provinces.Names[w.Provinces.IdOf(ctx.Content.Scenario.Conflict.Operations[op].TargetProvince)]} grid control is caught; {names[actor]} is blamed.");
                 if (a.FallbackOperation is not null)
                 {
                     int fb = ctx.Content.Scenario.Conflict.Operation(a.FallbackOperation);
@@ -307,6 +312,8 @@ public static class ConflictActions
     }
 
     private static string Demonym(SimWorld w, int nation) => w.Nations.Adjectives[nation];
+
+    public static string Front(SimWorld w) => w.Provinces.Names[w.Front.Province];
 
     private static string Note(ActionArgs a) => a.Note.Length > 0 ? $" ({a.Note}.)" : "";
 }

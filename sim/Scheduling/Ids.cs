@@ -90,6 +90,7 @@ public enum EntityKind : byte
     Faction = 11,
     ShippingLine = 12,
     Narrative = 13,
+    Seed = 14,
 }
 
 /// <summary>Packs (kind, id) into the "entity" coordinate of a random roll.</summary>

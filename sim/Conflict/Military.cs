@@ -438,7 +438,7 @@ public sealed class FrontAttackOrder(int issuer) : Order(issuer)
         if (!any) return OrderOutcome.Refused("No brigades at the front.");
         w.Front.ActiveUntil.Set(Issuer, ctx.Day + ctx.Balance.Military.ActiveDays);
         int enemy = Military.Enemy(w, Issuer);
-        Escalation.Record(ctx, Issuer, enemy, "border_clash_deaths", $"{w.Nations.Adjectives[Issuer]} forces attack at Veyl.");
+        Escalation.Record(ctx, Issuer, enemy, "border_clash_deaths", $"{w.Nations.Adjectives[Issuer]} forces attack at {ConflictActions.Front(w)}.");
         return OrderOutcome.Ok;
     }
 

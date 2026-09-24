@@ -18,11 +18,11 @@ public sealed record SocietyBalance(
     Fixed PricesBase, Fixed PricesPerPoint, Fixed WageGrowth, Fixed BaseInflation, Fixed ShortageWeight,
     Fixed ImportPriceWeight, Fixed InsurancePassThrough,
     Fixed JobsPerUnemploymentPoint, Fixed LabourForceShare,
-    Fixed SafetyPerIncident, Fixed BaselineIncidentsPer100k,
+    Fixed SafetyPerIncident, Fixed BaselineIncidentsPer100k, int IncidentDecayDays,
     Fixed DignityBase, Fixed DignityAxisFactor, Fixed DignityNormalizedPenalty,
     Fixed ServicesTransit, string ConnectivityKind, string WaterKind, string HealthKind, string CivilLibertiesFaction, Fine TrustRecoveryPerDay,
     Fixed PcWeeklyBase, Fixed PcPerApprovalPoint, Fixed PcCap, Fixed PcPerRallyPoint,
-    Fixed RallyOnAttack, Fixed RallyDecayPerWeek,
+    Fixed RallyOnAttack, int RallyMinWeight, Fixed RallyDecayPerWeek,
     Fine FactionSmoothing, Fine FactionStandingDecay,
     Fixed FactionActionApprovalBelow, Fixed FactionActionLeverageAbove, Fine FactionActionChance,
     Fine StrikeLabourCut, int StrikeDays, Fixed ProtestIncidents,
@@ -52,12 +52,12 @@ public sealed record SocietyBalance(
             p.Fixed("base"), p.Fixed("per_point"), p.Fixed("wage_growth"), p.Fixed("base_inflation"), p.Fixed("shortage_weight"),
             p.Fixed("import_price_weight"), p.Fixed("insurance_pass_through"),
             n.Fixed("jobs_per_unemployment_point"), n.Fixed("labour_force_share"),
-            n.Fixed("safety_per_incident"), n.Fixed("baseline_incidents_per_100k"),
+            n.Fixed("safety_per_incident"), n.Fixed("baseline_incidents_per_100k"), n.Int("incident_decay_days"),
             n.Fixed("dignity_base"), n.Fixed("dignity_axis_factor"), n.Fixed("dignity_normalized_penalty"),
             n.Fixed("services_transit"), n.Str("connectivity_kind"), n.Str("water_kind"), n.Str("health_kind"), n.Str("civil_liberties_faction"), n.Fine("trust_recovery_per_day"),
             n.Fixed("political_capital_weekly_base"), n.Fixed("political_capital_per_approval_point"), n.Fixed("political_capital_cap"),
             n.Fixed("political_capital_per_rally_point"),
-            n.Fixed("rally_on_attack"), n.Fixed("rally_decay_per_week"),
+            n.Fixed("rally_on_attack"), n.Int("rally_min_weight"), n.Fixed("rally_decay_per_week"),
             n.Fine("faction_smoothing"), n.Fine("faction_standing_decay"),
             n.Fixed("faction_action_approval_below"), n.Fixed("faction_action_leverage_above"), n.Fine("faction_action_chance"),
             n.Fine("strike_labour_cut"), n.Int("strike_days"), n.Fixed("protest_incidents"),
@@ -75,12 +75,12 @@ public sealed record SocietyBalance(
 public sealed record InformationBalance(
     Fine Beta, Fine Eta, Fine Gamma, Fine GammaEstablished, Fine EstablishedShare, Fixed TrustDivisor,
     Fixed CounterGammaMultiplier, int CounterDays, Fixed CounterMinTrust, Fine PrebunkingPerDay, Fixed PrebunkingCost,
-    Fine TakedownWeight, Fixed TakedownComplianceCost, int RumorCrisisHours, int RumorHorizonHours)
+    Fine TakedownWeight, Fixed TakedownComplianceCost, int RumorCrisisHours, int RumorHorizonHours, int RumorHourlyHorizonHours)
 {
     public static InformationBalance Read(ContentNode n) => new(
         n.Fine("beta"), n.Fine("eta"), n.Fine("gamma"), n.Fine("gamma_established"), n.Fine("established_share"), n.Fixed("trust_divisor"),
         n.Fixed("counter_gamma_multiplier"), n.Int("counter_days"), n.Fixed("counter_min_trust"), n.Fine("prebunking_per_day"), n.Fixed("prebunking_cost"),
-        n.Fine("takedown_weight"), n.Fixed("takedown_compliance_cost"), n.Int("rumor_crisis_hours"), n.Int("rumor_horizon_hours"));
+        n.Fine("takedown_weight"), n.Fixed("takedown_compliance_cost"), n.Int("rumor_crisis_hours"), n.Int("rumor_horizon_hours"), n.Int("rumor_hourly_horizon_hours"));
 }
 
 public sealed record CyberBalance(

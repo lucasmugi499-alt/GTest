@@ -106,6 +106,7 @@ society:
   labour_force_share: 0.5         # D-034: share of a segment's people in its labour force
   safety_per_incident: 2
   baseline_incidents_per_100k: 6  # D-034: violent incidents per 100,000 per month in peacetime
+  incident_decay_days: 30         # D-034: incidents drift back to the baseline over about a month
   dignity_base: 50
   dignity_axis_factor: 0.2        # D-034: Dignity + 0.2 × (information axis − 50)
   dignity_normalized_penalty: 3
@@ -120,6 +121,7 @@ society:
   political_capital_cap: 300
   political_capital_per_rally_point: 0.1   # D-035: "plus any rally effect"
   rally_on_attack: 20
+  rally_min_weight: 6              # an attack of at least this escalation weight (disruptive cyber) rallies the victim
   rally_decay_per_week: 1
   faction_smoothing: 0.5          # D-035: weekly approval moves this share of the way to agenda alignment
   faction_standing_decay: 0.1     # D-035: storylet-driven standing fades 10% a week
@@ -170,6 +172,7 @@ information:
   takedown_compliance_cost: 20    # D-036: c for a takedown request
   rumor_crisis_hours: 12
   rumor_horizon_hours: 720
+  rumor_hourly_horizon_hours: 48   # hourly passes forecast only this far (the crisis signal needs 12)
 
 # Spec Cyber access and detection; Payloads, effects and attribution.
 cyber:

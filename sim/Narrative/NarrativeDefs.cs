@@ -163,6 +163,8 @@ public sealed record NarrativeDef(
             Unique(s.Choices.Select(c => c.Id), $"choice in storylet '{s.Id}'");
             if (s.Default is not null && s.ChoiceIndex(s.Default) < 0) throw new ContentException($"Storylet '{s.Id}': default '{s.Default}' is not a choice.");
             if (s.ExpiresDays >= 0 && s.Default is null) throw new ContentException($"Storylet '{s.Id}' expires but has no default choice.");
+            if (s.Default is not null && s.Choices[s.ChoiceIndex(s.Default)].Requires.Count > 0)
+                throw new ContentException($"Storylet '{s.Id}': default '{s.Default}' has requirements; a default must always be possible.");
             foreach (var r in s.Roles)
                 if (!Characters.Any(c => c.Role == r.Role)) throw new ContentException($"Storylet '{s.Id}': nobody can play role '{r.Role}'.");
             foreach (var ch in s.Choices)

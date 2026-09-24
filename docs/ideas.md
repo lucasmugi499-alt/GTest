@@ -28,6 +28,6 @@ These came from the original slice brief:
 
 ## Found during the M6 balance pass
 
-- **Narrative ceiling (γ):** under the spec's γ = 0.02, belief always settles at about 40%, whatever the counter-measure, so counters only delay tipping. Options: a counter-measure that raises γ (debunking speeds up disbelief), or a Virality decay per day since release. Needs a design call (D-043).
+- **Narrative ceiling:** in the spec's model nearly everyone is exposed eventually and a Plausibility share believe, so belief settles at about 40% whatever the counter-measure; counters only delay tipping. Options: a counter-narrative that lowers Plausibility, prebunking that also protects the exposed, or Virality that decays with days since release. Needs a design call (D-043).
 - **Varan's ±1 day jitter:** would also spread out the storylet-share metric.
 - **Storylet pool size:** the spec's "no storylet above 2% of firings" needs at least about 60 storylets in the pool.

@@ -88,6 +88,21 @@ public class ConflictTests
         Assert.True(Escalation.Meter(w, 0, 1) >= Fixed.FromInt(30));
     }
 
+    [Fact]
+    public void DeEscalationReArmsTheRedLineAndDoesNotBlockDecay()
+    {
+        var sim = TestContent.NewSim();
+        var w = sim.World;
+        w.Politics.RedLine.Init(1, Fixed.FromInt(18));
+        w.Politics.RedLineCrossed.Init(1, true); // the meter (20) is above it and the crossing was answered
+        int lastBig = w.Escalation.LastBigAction[w.Escalation.At(0, 1)];
+        Escalation.AddToMeter(sim.ReadContext(), 0, 1, Fixed.FromInt(-5), 0, 5); // a back channel: 20 → 15
+        w.Commit();
+        Assert.Equal(Fixed.FromInt(15), Escalation.Meter(w, 0, 1));
+        Assert.False(w.Politics.RedLineCrossed[1]);
+        Assert.Equal(lastBig, w.Escalation.LastBigAction[w.Escalation.At(0, 1)]);
+    }
+
     // ---- Cyber ----
 
     [Fact]
