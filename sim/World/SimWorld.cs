@@ -23,6 +23,19 @@ public sealed class SimWorld : ICommittable, IStateHashable
     public DesignStore Designs { get; }
     public ShipmentList Shipments { get; } = new();
 
+    public PoliticsStore Politics { get; }
+    public SegmentStore Segments { get; }
+    public FactionStore Factions { get; }
+    public PrecedentStore Precedents { get; }
+    public CorporationStore Corporations { get; }
+    public NarrativeStore Narratives { get; }
+    public OperationStore Operations { get; }
+    public BrigadeStore Brigades { get; }
+    public FrontStore Front { get; }
+    public EscalationStore Escalation { get; }
+    public ShippingStore Shipping { get; }
+    public EventLog Log { get; } = new();
+
     private readonly ICommittable[] _commit;
     private readonly IStateHashable[] _hash;
 
@@ -45,9 +58,22 @@ public sealed class SimWorld : ICommittable, IStateHashable
         Demand = new DemandStore(s, Catalog, Provinces);
         Designs = new DesignStore(Catalog);
 
+        Politics = new PoliticsStore(s, Nations);
+        Segments = new SegmentStore(s, Loads, Provinces, b);
+        Factions = new FactionStore(s, Segments);
+        Precedents = new PrecedentStore(s, Nations.Count);
+        Corporations = new CorporationStore(s);
+        Narratives = new NarrativeStore(s, Segments, Nations);
+        Operations = new OperationStore(s, Nations, Provinces, Substations);
+        Brigades = new BrigadeStore(s, Nations, Segments);
+        Front = new FrontStore(s, Nations, Provinces);
+        Escalation = new EscalationStore(Nations.Count, s.Conflict.StartMeter);
+        Shipping = new ShippingStore(s);
+
         // Fixed order: this is the order state commits and hashes in.
-        _commit = [Nations, Provinces, Labour, Stocks, Facilities, Substations, Loads, Plants, TieLines, Edges, Imports, Demand, Designs];
-        _hash = [.. _commit.Cast<IStateHashable>(), Shipments];
+        _commit = [Nations, Provinces, Labour, Stocks, Facilities, Substations, Loads, Plants, TieLines, Edges, Imports, Demand, Designs,
+                   Politics, Segments, Factions, Precedents, Corporations, Narratives, Operations, Brigades, Front, Escalation, Shipping];
+        _hash = [.. _commit.Cast<IStateHashable>(), Shipments, Log];
     }
 
     public void Commit()

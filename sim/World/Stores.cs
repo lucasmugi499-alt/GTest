@@ -31,20 +31,23 @@ public abstract class Store : ICommittable, IStateHashable
 
     public bool TryIdOf(string key, out int id) => _byKey.TryGetValue(key, out id);
 
-    protected Column<T> Col<T>(string name) where T : unmanaged
+    protected Column<T> Col<T>(string name) where T : unmanaged => Col<T>(name, Count);
+
+    /// <summary>A column with its own length, e.g. several values per entity.</summary>
+    protected Column<T> Col<T>(string name, int length) where T : unmanaged
     {
-        var c = new Column<T>($"{TypeName}.{name}", Count);
+        var c = new Column<T>($"{TypeName}.{name}", length);
         _columns.Add(c);
         _hashed.Add(c);
         return c;
     }
 
-    public void Commit()
+    public virtual void Commit()
     {
         foreach (var c in _columns) c.Commit();
     }
 
-    public void HashInto(StateHasher h)
+    public virtual void HashInto(StateHasher h)
     {
         h.Section(TypeName).Add(Count);
         for (int i = 0; i < Count; i++) h.Add(Keys[i]);
@@ -55,6 +58,7 @@ public abstract class Store : ICommittable, IStateHashable
 public sealed class NationStore : Store
 {
     public IReadOnlyList<string> Names { get; }
+    public IReadOnlyList<string> Adjectives { get; }
     public int Player { get; }
 
     /// <summary>Stockpile doctrine j: 0 Just-in-Time to 1 Just-in-Case (spec Days of Cover and doctrine).</summary>
@@ -69,6 +73,7 @@ public sealed class NationStore : Store
     public NationStore(ScenarioDef s) : base("nation", s.Nations.Select(n => n.Id).ToList())
     {
         Names = s.Nations.Select(n => n.Name).ToList();
+        Adjectives = s.Nations.Select(n => n.Adjective).ToList();
         Player = IdOf(s.Player);
         Doctrine = Col<Fine>("doctrine");
         SpareTransformers = Col<int>("spare_transformers");
@@ -108,6 +113,9 @@ public sealed class ProvinceStore : Store
     public Column<bool> Collapsed { get; }
     public Column<Fine> RestoreLevel { get; }
 
+    /// <summary>Regional internet shutdown (spec counter-measure; an emergency power).</summary>
+    public Column<bool> InternetShutdown { get; }
+
     public ProvinceStore(ScenarioDef s, NationStore nations) : base("province", s.Provinces.Select(p => p.Id).ToList())
     {
         Names = s.Provinces.Select(p => p.Name).ToList();
@@ -121,6 +129,7 @@ public sealed class ProvinceStore : Store
         RefuelTonnesPerHour = Col<Fixed>("refuel_tph");
         Collapsed = Col<bool>("collapsed");
         RestoreLevel = Col<Fine>("restore_level");
+        InternetShutdown = Col<bool>("internet_shutdown");
 
         for (int i = 0; i < Count; i++)
         {

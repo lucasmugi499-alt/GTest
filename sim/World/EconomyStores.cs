@@ -254,7 +254,8 @@ public sealed class LoadStore : Store
     public bool HasBackup(int load) => TankHours[load] > Fixed.Zero;
 }
 
-public enum SubstationState { Online = 0, Damaged = 1 }
+/// <summary>Damaged needs a repair; Tripped comes back by itself when a cyber disruption ends (spec Grid disruption).</summary>
+public enum SubstationState { Online = 0, Damaged = 1, Tripped = 2 }
 public enum RepairKind { None = 0, Spare = 1, NewTransformer = 2 }
 
 /// <summary>Substations and their repair jobs (spec Substations).</summary>
@@ -271,6 +272,8 @@ public sealed class SubstationStore : Store
     public Column<int> Repair { get; }
     public Column<Fixed> RepairProgress { get; }
     public Column<Fixed> RepairRequired { get; }
+    /// <summary>Hours left on a cyber disruption (state Tripped).</summary>
+    public Column<Fixed> TripHoursLeft { get; }
 
     public SubstationStore(ScenarioDef s, ProvinceStore provinces) : base("substation", s.Substations.Select(x => x.Id).ToList())
     {
@@ -282,6 +285,7 @@ public sealed class SubstationStore : Store
         Repair = Col<int>("repair");
         RepairProgress = Col<Fixed>("repair_progress");
         RepairRequired = Col<Fixed>("repair_required");
+        TripHoursLeft = Col<Fixed>("trip_hours_left");
     }
 
     /// <summary>Share of nameplate capacity available: 1 online, 0 damaged, the mobile unit's share once it's installed.</summary>
@@ -360,6 +364,8 @@ public sealed class ImportStore : Store
     /// <summary>Stopped by the source's export controls (spec Supply shock).</summary>
     public Column<bool> Blocked { get; }
     public Column<Fixed> ShippedToday { get; }
+    /// <summary>Share of capacity still available: sea routes lose shipping lines that skip the port (spec War-risk insurance).</summary>
+    public Column<Fine> CapacityFactor { get; }
 
     public ImportStore(ScenarioDef s, Catalog catalog, NationStore nations, ProvinceStore provinces)
         : base("import", s.Imports.Select(i => $"{i.Good}<{i.From}").ToList())
@@ -372,6 +378,8 @@ public sealed class ImportStore : Store
         Sea = s.Imports.Select(i => i.Sea).ToArray();
         Blocked = Col<bool>("blocked");
         ShippedToday = Col<Fixed>("shipped_today");
+        CapacityFactor = Col<Fine>("capacity_factor");
+        for (int i = 0; i < Count; i++) CapacityFactor.Init(i, Fine.One);
     }
 }
 
