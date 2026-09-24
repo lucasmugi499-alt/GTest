@@ -256,3 +256,85 @@ Refines the spec's Crisis sub-ticks.
 - Along each edge, each way, stock moves to level the two provinces' local Days of Cover, within the edge's daily tonnes for that good's class.
 - A province that doesn't use a good passes all of it on.
 - **Why:** the first rule tried, "ship above your target stock", never moved anything. The port province's stock never reached target while imports were still counted as in transit, so Ossen East ran out of wafer blanks in a quiet world.
+
+## D-034 · Society numbers the spec leaves open
+
+All of these are in `balance.yaml` under `society`.
+- **Prices need:**
+  - Wage growth (2.5%) and m − g (2%) are fixed; the slice has no money supply or growth model.
+  - Import prices rise 2% per point of war-risk multiplier above 1.
+  - The shortage share is the % of goods in critical shortage.
+- **Jobs:** unemployment is the segment's baseline plus workers idled by facilities running below capacity in its province, over a labour force of 50% of the population.
+- **Safety:** violent incidents and deaths per 100,000 are a decaying monthly sum that settles back to a peacetime baseline of 6. Combat deaths are booked to the brigade's home segment.
+- **Services:** the average of water, hospital and transit availability, where transit is 90% × the segment's power.
+- **Dignity:** 50 + 0.2 × (information axis − 50) + the segment's identity offset − normalized-precedent penalties − the curfew penalty.
+- **Satisfaction smoothing** uses exponential averages with half-lives of 30 days, or 7 for Power and Safety.
+- **Align and Trust:**
+  - Narrative belief lowers each by the narrative's align/trust hit × the believing share.
+  - Precedents and choices shift Align temporarily; the shift fades 2% a day.
+  - Trust drifts back to its start at the same rate.
+- **Starting readouts:** Trust starts at 58 (the concept's figure). Approval comes out near 70 with these needs; it isn't set by the concept, and M6 can tune it.
+
+## D-035 · Factions and Political Capital
+
+- **Faction approval** moves halfway each week toward 50 + its agenda terms + its standing.
+  - Agenda terms: rung above 2, mobilization level, emergency in force, civil-liberties precedents used, jobs and power of member segments.
+  - Standing comes from storylets and narratives, and fades 10% a week.
+- **Faction actions:**
+  - A strike idles 20% of the members' provinces' workers for 7 days.
+  - A protest adds 5 incidents per 100,000 to member segments.
+  - Leaks and no-confidence motions are logged for the narrative engine (M4).
+- **Political Capital:** "plus any rally effect" is + 0.1 × Rally per week.
+- **Rally:** "when you are attacked" means any action of weight 6 or more against you. It sets Rally to at least 20 and Legitimacy to at least 70 (answering an attack).
+- **Precedents:** a civil-liberties precedent also costs the Civil Liberties faction 10 standing × 0.6^(n−1).
+
+## D-036 · Information costs
+
+- A takedown request's compliance cost c is 20.
+- The Political Capital spent as pressure is gone even if the company refuses.
+- Takedowns apply to platforms a company owns (Brightline).
+- Prebunking a narrative costs 5 Political Capital.
+- The counter-narrative (going live) is free, but refused while national Trust is 50 or below.
+
+## D-037 · Military details
+
+- **Drone cover:** full drone surveillance cover needs 30 drones per km per day (the spec's locking density), scaled by the design's effectiveness.
+- **Morale:** the brigade's morale × (1 + (war support − 50) ÷ 100), clamped 0.5 to 1.2.
+- **Supply fill:**
+  - Diesel stock at the front ÷ 7 days of the brigades' burn (2 tonnes per 1,000 soldiers a day), less trucks lost in the enemy's kill zone.
+  - The player burns it only while the front is active.
+- **Drones:** the player flies drones from its national stock, the front province's first. Varan's drones, diesel and supply aren't simulated, so they're unlimited.
+- **Medical supply** for returning wounded is the average availability of hospital loads.
+- **Clash deaths:** a clash with N deaths costs N ÷ 0.25 strength (one killed to three wounded).
+- **Mobilization:**
+  - Only levels 0 to 2 in this slice.
+  - Only skilled reservists leave labour pools (the concept's 1,800 linemen and technicians, plus 100 fab engineers).
+  - 25% of the called-up reservists form a reserve brigade at Veyl.
+  - A level change takes effect in phase 6, so production sees it the next day.
+- **The front** stays active 3 days after an attack order.
+
+## D-038 · Narrative speed (a contradiction between the docs)
+
+- **The conflict:**
+  - The spec's η = 0.5 per day caps how fast exposed people become believers: at most about 30% of the exposed a day.
+  - So no Virality can make a deepfake tip in the concept's "about five hours".
+- **What was done:**
+  - The spec's formulas are kept, and the deepfake's Virality is 50, so it tips about 2.5 to 3 days after release (Day 7).
+  - Rumor Velocity reports that forecast.
+- **Hourly steps:** when any segment's province is in Crisis Time, every narrative steps hourly that day (the model couples all segments).
+
+## D-039 · Escalation and Varan
+
+- **The meter:**
+  - The meter adds the victim's perceived weight (×1.5 with civilian harm), then rises to the action's floor.
+  - Weekly decay may take it below a floor reached earlier.
+- **The AI answers only what's done to it.**
+  - Its red line counts only the rival's actions. Its own scripted moves don't provoke it.
+  - It answers each crossing once, until the meter decays back below the red line.
+  - A crossing is answered with the cheapest action whose floor reaches the next rung.
+  - The reactive answer (weight ≤ e × r, 1 to 14 days later) is never an offensive.
+- **D-014 fallback:** the caught attempt is recorded as a detected intrusion (+4). The fallback disruption of the Interior substations is a disruptive cyber attack in its own right (+6).
+- **Systems added outside the spec's lists:**
+  - Weekly: war exhaustion (the spec gives it per week) and escalation decay.
+  - Monthly: cyber access and detection, and the red-line estimate.
+- **Not simulated:** Varan's own politics (its war support is 50).

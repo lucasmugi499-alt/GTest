@@ -62,10 +62,11 @@ static int Run(Dictionary<string, string> opts, bool printDaily)
         if (tripped.Count > 0) Console.WriteLine($"Shock: 3 Ossen East substations damaged at day {trip}. Repair policy: {repair}.");
         if (opts.ContainsKey("export-controls")) Console.WriteLine($"Shock: Varan export controls on magnets and gallium from day {ec}.");
         Console.WriteLine();
-        Console.WriteLine("Day / date                 chips   drones  DoC magnet  DoC ctrl   dark   subs down  hospital fuel  crisis");
+        Console.WriteLine("Day / date                 chips  drones  DoC mag  DoC ctrl  dark   subs  hosp  appr  PC   trust rung  deepfake  crisis");
     }
 
     double? chipBaseline = null;
+    int logShown = 0;
     while (sim.Day <= lastDay)
     {
         int day = sim.Day;
@@ -82,12 +83,22 @@ static int Run(Dictionary<string, string> opts, bool printDaily)
         var hospital = snap.Services.First(x => x.Id == "ossen_general");
         bool checkpoint = day % content.Balance.Sim.HashCheckIntervalDays == 0 || day == lastDay;
 
+        var deepfake = snap.Narratives.FirstOrDefault(n => n.Id == "president_fled");
+        var p = snap.Politics;
         Console.WriteLine(
-            $"{sim.Calendar.Describe(day),-26} {chips / chipBaseline.Value,6:P0}  {snap.Good("fpv_strike_drone").ProducedToday,6:0}" +
-            $"  {Cover(snap.Good("rare_earth_magnet")),10}  {Cover(snap.Good("flight_controller")),8}" +
-            $"  {dark / 1e6,5:0.0}M  {snap.Substations.Count(x => !x.Online),9}  {hospital.FuelHours,11:0}h" +
+            $"{sim.Calendar.Describe(day),-26} {chips / chipBaseline.Value,5:P0} {snap.Good("fpv_strike_drone").ProducedToday,6:0}" +
+            $"  {Cover(snap.Good("rare_earth_magnet")),7}  {Cover(snap.Good("flight_controller")),8}" +
+            $"  {dark / 1e6,4:0.0}M  {snap.Substations.Count(x => !x.Online),4}  {hospital.FuelHours,3:0}h" +
+            $"  {p.Approval,4:0}  {p.PoliticalCapital,3:0}  {p.Trust,4:0}  {p.Rung,3}" +
+            $"  {(deepfake is null ? "-" : $"{deepfake.Believing.Max(),6:P0}{(deepfake.EstablishedSegments > 0 ? "*" : " ")}"),8}" +
             $"  {(crisis.Count == 0 ? "-" : string.Join(", ", crisis))}" +
             (checkpoint ? $"   [hash {snap.StateHash}]" : ""));
+        for (; logShown < snap.Log.Count; logShown++)
+        {
+            var e = snap.Log[logShown];
+            if (e.Kind is "ai_intent" or "red_line" && !verbose) continue;
+            Console.WriteLine($"      {(e.Hour >= 0 ? $"{e.Hour:00}:00 " : "")}{e.Text}");
+        }
 
         if (verbose) PrintDetail(snap);
     }
@@ -126,6 +137,15 @@ static void PrintDetail(SimSnapshot snap)
     var low = snap.Goods.Where(g => g.DaysOfCover is not null).OrderBy(g => g.DaysOfCover).Take(4);
     Console.WriteLine($"    lowest cover: {string.Join(", ", low.Select(g => $"{g.Id} {Cover(g)}"))}");
     foreach (var d in snap.Designs) Console.WriteLine($"    design {d.Id}: effectiveness {d.Effectiveness:0.000} (cap {d.Cap:0.000})");
+    var pv = snap.Politics;
+    Console.WriteLine($"    politics: approval {pv.Approval:0.0}  PC {pv.PoliticalCapital:0}  trust {pv.Trust:0.0}  war support {pv.WarSupport:0.0}  rally {pv.Rally:0}  exhaustion {pv.WarExhaustion:0.0}  inflation {pv.Inflation:0.0}%");
+    Console.WriteLine($"    escalation: meter {pv.EscalationMeter:0.0} (rung {pv.Rung})  red line estimate {pv.RivalRedLineEstimate:0}  insurance ×{pv.InsuranceMultiplier:0}  lines calling {pv.ShippingLinesCalling}/{pv.ShippingLines}  mobilization {pv.Mobilization}");
+    foreach (var s in snap.Segments)
+        Console.WriteLine($"    seg  {s.Name,-24} sat {s.Satisfaction,5:0.0}  align {s.Align,5:0.0}  trust {s.Trust,5:0.0}  needs {string.Join(" ", s.Needs.Select(n => $"{n,3:0}"))}");
+    foreach (var f in snap.Factions) Console.WriteLine($"    fac  {f.Name,-24} approval {f.Approval,5:0.0}  leverage {f.Leverage,5:0.0}");
+    foreach (var n in snap.Narratives)
+        Console.WriteLine($"    nar  {n.Id,-22} believing {string.Join(" ", n.Believing.Select(b => $"{b,5:P1}"))}  rumor {(n.RumorHours < 0 ? "-" : $"{n.RumorHours:0}h")}");
+    Console.WriteLine($"    front: {(snap.Front.Active ? "ACTIVE" : "quiet")}  {string.Join("  ", snap.Front.Brigades.Where(b => b.Strength > 0).Select(b => $"{b.Name} {b.Strength:N0} ({b.Killed:N0} killed)"))}");
 }
 
 static (int Day, int Hour) ParseDayHour(string text)

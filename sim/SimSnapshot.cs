@@ -1,4 +1,5 @@
 using Cascade.Sim.Content;
+using Cascade.Sim.Conflict;
 using Cascade.Sim.Scheduling;
 using Cascade.Sim.World;
 
@@ -19,7 +20,14 @@ public sealed record SimSnapshot(
     IReadOnlyList<FacilityView> Facilities,
     IReadOnlyList<SubstationView> Substations,
     IReadOnlyList<ServiceView> Services,
-    IReadOnlyList<DesignView> Designs)
+    IReadOnlyList<DesignView> Designs,
+    PoliticsView Politics,
+    IReadOnlyList<SegmentView> Segments,
+    IReadOnlyList<FactionView> Factions,
+    IReadOnlyList<NarrativeView> Narratives,
+    IReadOnlyList<OperationView> Operations,
+    FrontView Front,
+    IReadOnlyList<LogEntry> Log)
 {
     /// <summary>Snapshot from the point of view of the player nation.</summary>
     public static SimSnapshot Of(Simulation sim)
@@ -101,10 +109,55 @@ public sealed record SimSnapshot(
         for (int d = 0; d < w.Designs.Count; d++)
             designs.Add(new DesignView(w.Designs.Keys[d], w.Designs.Effectiveness[d].ToDoubleForUi(), w.Designs.Cap[d].ToDoubleForUi()));
 
+        var pol = w.Politics;
+        int rival = Enumerable.Range(0, w.Nations.Count).First(n => n != player);
+        var meter = Conflict.Escalation.Meter(w, player, rival);
+        var politics = new PoliticsView(
+            pol.PoliticalCapital[player].ToDoubleForUi(), pol.Approval[player].ToDoubleForUi(), pol.Trust[player].ToDoubleForUi(),
+            pol.WarSupport[player].ToDoubleForUi(), pol.Rally[player].ToDoubleForUi(), pol.WarExhaustion[player].ToDoubleForUi(),
+            pol.Legitimacy[player].ToDoubleForUi(), pol.Inflation[player].ToDoubleForUi(),
+            pol.EmergencyActive[player], pol.Backsliding[player].ToDoubleForUi(),
+            w.Nations.MobilizationLevel[player], pol.MobilizationTarget[player], pol.ManpowerPool[player].ToDoubleForUi(),
+            meter.ToDoubleForUi(), sim.Balance.Escalation.RungOf(meter), pol.RedLineEstimate[rival].ToDoubleForUi(),
+            pol.InsuranceMultiplier[player].ToDoubleForUi(), pol.LinesCalling[player], w.Shipping.Count,
+            pol.KiaTotal[player].ToDoubleForUi(),
+            Enumerable.Range(0, w.Precedents.Types).Where(t => w.Precedents.Uses[w.Precedents.At(player, t)] > 0)
+                .Select(t => $"{w.Precedents.Defs[t].Id}×{w.Precedents.Uses[w.Precedents.At(player, t)]}").ToList());
+
+        var segments = Enumerable.Range(0, w.Segments.Count).Select(i => new SegmentView(
+            w.Segments.Keys[i], w.Segments.Defs[i].Name, w.Segments.Population[i],
+            Enumerable.Range(0, Needs.Count).Select(k => w.Segments.NeedSmoothed[w.Segments.At(i, (Need)k)].ToDoubleForUi()).ToArray(),
+            w.Segments.Satisfaction[i].ToDoubleForUi(), w.Segments.Align[i].ToDoubleForUi(), w.Segments.Trust[i].ToDoubleForUi(),
+            w.Segments.Unemployment[i].ToDoubleForUi())).ToList();
+
+        var factions = Enumerable.Range(0, w.Factions.Count).Select(i => new FactionView(
+            w.Factions.Keys[i], w.Factions.Defs[i].Name, w.Factions.Approval[i].ToDoubleForUi(), w.Factions.Leverage[i].ToDoubleForUi())).ToList();
+
+        var narratives = Enumerable.Range(0, w.Narratives.Count).Where(n => w.Narratives.Active[n]).Select(n => new NarrativeView(
+            w.Narratives.Keys[n], w.Narratives.Defs[n].Name,
+            Enumerable.Range(0, w.Segments.Count).Select(s => w.Narratives.B[w.Narratives.At(n, s)].ToDoubleForUi()).ToArray(),
+            Enumerable.Range(0, w.Segments.Count).Count(s => w.Narratives.Established[w.Narratives.At(n, s)]),
+            w.Narratives.RumorHours[n].ToDoubleForUi(), w.Narratives.Takedown[n], w.Narratives.CounterUntil[n] >= sim.Day)).ToList();
+
+        var operations = Enumerable.Range(0, w.Operations.Count).Select(i => new OperationView(
+            w.Operations.Keys[i], w.Nations.Keys[w.Operations.Attacker[i]], ((OperationState)w.Operations.State[i]).ToString(),
+            w.Operations.Access[i].ToDoubleForUi(), w.Operations.Attribution[i].ToDoubleForUi())).ToList();
+
+        var fr = w.Front;
+        var front = new FrontView(
+            fr.Def.Id, fr.ActiveUntil[player] >= sim.Day - 1 || fr.ActiveUntil[rival] >= sim.Day - 1, fr.Locked[0],
+            Enumerable.Range(0, w.Brigades.Count).Select(b => new BrigadeView(w.Brigades.Keys[b], w.Brigades.Defs[b].Name,
+                w.Nations.Keys[w.Brigades.Nation[b]], w.Brigades.Strength[b].ToDoubleForUi(), w.Brigades.Killed[b].ToDoubleForUi(),
+                ((Posture)w.Brigades.Posture[b]).ToString())).ToList(),
+            fr.Detection[player].ToDoubleForUi(), fr.Detection[rival].ToDoubleForUi(),
+            fr.DroneDensity[player].ToDoubleForUi(), fr.DroneDensity[rival].ToDoubleForUi(),
+            fr.KillZone[player].ToDoubleForUi(), fr.AdvanceKm[player].ToDoubleForUi(), fr.AdvanceKm[rival].ToDoubleForUi());
+
         return new SimSnapshot(
             sim.Day, sim.Hour, sim.Calendar.Describe(sim.Day), sim.IsCrisisDay,
             Core.StateHasher.Format(sim.StateHash()),
-            provinces, goods, facilities, subs, services, designs);
+            provinces, goods, facilities, subs, services, designs,
+            politics, segments, factions, narratives, operations, front, w.Log.Entries);
     }
 
     public GoodView Good(string key) => Goods.First(g => g.Id == key);
@@ -125,3 +178,24 @@ public sealed record SubstationView(string Id, string Province, bool Online, dou
 public sealed record ServiceView(string Id, string Kind, string Province, double Powered, double FuelHours, double TankHours, double Availability);
 
 public sealed record DesignView(string Id, double Effectiveness, double Cap);
+
+public sealed record PoliticsView(double PoliticalCapital, double Approval, double Trust, double WarSupport, double Rally,
+    double WarExhaustion, double Legitimacy, double Inflation, bool Emergency, double Backsliding,
+    int Mobilization, int MobilizationTarget, double ManpowerPool,
+    double EscalationMeter, int Rung, double RivalRedLineEstimate, double InsuranceMultiplier, int ShippingLinesCalling, int ShippingLines,
+    double KilledInAction, IReadOnlyList<string> Precedents);
+
+/// <summary>Needs in the order of <see cref="Need"/>, smoothed.</summary>
+public sealed record SegmentView(string Id, string Name, long Population, double[] Needs, double Satisfaction, double Align, double Trust, double Unemployment);
+
+public sealed record FactionView(string Id, string Name, double Approval, double Leverage);
+
+/// <summary>Believing share per segment (in segment order); RumorHours −1 if no segment is about to tip.</summary>
+public sealed record NarrativeView(string Id, string Name, double[] Believing, int EstablishedSegments, double RumorHours, bool TakenDown, bool Countered);
+
+public sealed record OperationView(string Id, string Attacker, string State, double Access, double Attribution);
+
+public sealed record BrigadeView(string Id, string Name, string Nation, double Strength, double Killed, string Posture);
+
+public sealed record FrontView(string Id, bool Active, bool Locked, IReadOnlyList<BrigadeView> Brigades, double PlayerDetection, double RivalDetection,
+    double PlayerDroneDensity, double RivalDroneDensity, double KillZoneKm, double PlayerAdvanceKm, double RivalAdvanceKm);
