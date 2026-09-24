@@ -10,12 +10,21 @@ internal static class TestContent
     private static readonly Lazy<ContentSet> Lazy = new(() => ContentSet.Load(ContentSet.FindContentDir()));
     public static ContentSet Repo => Lazy.Value;
 
-    public static Simulation NewSim(ulong seed = 42, SimulationOptions? options = null) => new(Repo, seed, options);
+    /// <summary>A sim without the scenario's scripted rival actions, for testing one system at a time.</summary>
+    public static Simulation NewSim(ulong seed = 42, SimulationOptions? options = null)
+    {
+        options ??= new SimulationOptions();
+        options.ScriptedScenario = false;
+        return new Simulation(Repo, seed, options);
+    }
+
+    /// <summary>The full scenario, with Varan's schedule (D-013).</summary>
+    public static Simulation NewScenario(ulong seed = 20310303) => new(Repo, seed);
 
     /// <summary>A sim whose Production slot runs <see cref="ProbePhase"/>, so state actually evolves with the RNG.</summary>
     public static Simulation NewProbeSim(ulong seed)
     {
-        var o = new SimulationOptions();
+        var o = new SimulationOptions { ScriptedScenario = false };
         o.Phases[PhaseId.Production] = new ProbePhase();
         return new Simulation(Repo, seed, o);
     }
