@@ -45,6 +45,8 @@ public enum SystemId : uint
     WeeklyThreatRecognition = 105,
     WeeklyAiReplan = 106,
     WeeklyForecast = 107,
+    /// <summary>Not in the spec's weekly list; runs the weekly countermeasure decay formula (D-030).</summary>
+    WeeklyCountermeasures = 108,
 
     // Monthly, in spec order.
     MonthlyResearch = 200,
@@ -65,6 +67,12 @@ public enum EntityKind : byte
     None = 0,
     Nation = 1,
     Province = 2,
+    Facility = 3,
+    Load = 4,
+    Substation = 5,
+    Design = 6,
+    Import = 7,
+    Demand = 8,
 }
 
 /// <summary>Packs (kind, id) into the "entity" coordinate of a random roll.</summary>
