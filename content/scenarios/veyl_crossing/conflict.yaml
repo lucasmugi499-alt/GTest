@@ -1,0 +1,96 @@
+# Cyber, military, escalation and Varan's behaviour for The Veyl Crossing.
+
+# Cyber operations in place at Day 0 (spec Cyber access and detection).
+#   access A 0-100; vulnerability v (0.2 hardened .. 1.5 legacy); defence Def of the target, 0-100
+#   vendor: targets on the same vendor systems patch after a use (spec Burn)
+#   targets: substations the payload hits; payload power 0.5-2; analog_reserve 0-0.8 (manual operation)
+#   proxy: run through a proxy (attribution confidence caps at 0.6 instead of 0.9)
+operations:
+  - id: varan_eastern_grid        # the seed planted four months ago (concept: odd logins at an eastern substation)
+    attacker: varan
+    target_province: kestria_east_ossen
+    targets: [ossen_north, ossen_south, ossen_industrial]
+    access: 75
+    vulnerability: 1.2
+    defence: 40
+    vendor: kestgrid_scada
+    payload: 1.5
+    analog_reserve: 0.2
+    proxy: true
+  - id: varan_interior_grid       # D-014 fallback: a weaker foothold in the Interior
+    attacker: varan
+    target_province: kestria_interior
+    targets: [interior_north, interior_south]
+    access: 45
+    vulnerability: 0.8
+    defence: 50
+    vendor: interior_ems
+    payload: 1.0
+    analog_reserve: 0.2
+    proxy: true
+  - id: kestria_ossen_dam         # Day 10 option D: Kestria's prepared access in Varan's dam control network
+    attacker: kestria
+    target_province: varan_core
+    targets: []
+    access: 65
+    vulnerability: 1.0
+    defence: 45
+    vendor: varan_hydro
+    payload: 1.0
+    analog_reserve: 0.3
+    proxy: false
+
+# One front segment at Veyl (spec Combat and fronts). Scores 0-100, shares 0-1.
+front:
+  id: veyl_front
+  province: veyl
+  width_km: 30
+  drone_good: fpv_strike_drone      # what the front flies and burns
+  sides:
+    kestria: { fortification: 1.5, concealment: 55, protection: 0.3, jamming: 0.3, satellite: 0.4, sigint: 0.5, humint: 0.5, drone_effectiveness_design: fpv_strike_mk2 }
+    varan:   { fortification: 1.0, concealment: 45, protection: 0.3, jamming: 0.4, satellite: 0.6, sigint: 0.5, humint: 0.3, drone_effectiveness: 0.9 }
+
+# Brigades at the start (spec Data model: Brigade). home: the segment its casualties are booked to.
+brigades:
+  - { id: kestria_border_bde, name: Veyl Border Brigade,    nation: kestria, type: infantry,   strength: 3000, training: 65, equipment: 60, cohesion: 70, experience: 10, morale: 1.0, home: veyl_borderlanders, drones_per_day: 150 }
+  - { id: varan_4th_mech,     name: Varan 4th Mechanized,   nation: varan,   type: mechanized, strength: 4000, training: 70, equipment: 70, cohesion: 75, experience: 20, morale: 1.0, home: none,               drones_per_day: 300 }
+
+# Mobilization (spec Mobilization levels; concept Day 3: 40,000 reservists, 1,800 of them linemen and technicians).
+mobilization:
+  kestria:
+    reservists_by_level: [0, 0, 40000]
+    front_share: 0.25
+    reserve_brigade: { name: Kestrian Reserve Brigade, type: infantry, training: 50, equipment: 50, cohesion: 50, experience: 0, morale: 1.0, home: interior_heartland, drones_per_day: 100 }
+    # Skilled people who are reservists: called at level 2 unless their pool is exempted.
+    skilled_reservists:
+      kestria_east_ossen: { grid_linemen: 500, technicians: 700, process_engineers: 100 }
+      kestria_interior:   { grid_linemen: 300, technicians: 300 }
+    recruitment_law: selective
+
+# Escalation between the pair (spec Escalation meter). Rungs per D-003.
+escalation:
+  start_meter: 20
+
+# Varan (spec Personalities, Red lines). Personality table in balance.yaml.
+varan:
+  personality: pragmatic
+  nationalists_strong: false
+  economy_weak: false
+  drone_ops_near_border: 1
+  # What Varan can answer with (spec: an action of weight e × r, limited by what it can actually do).
+  repertoire:
+    - { id: influence_campaign, kind: narrative,    action: influence_detected,   narrative: blackout_incompetence, seed: { ossen_families: 0.004, ossen_workers: 0.003 } }
+    - { id: cyber_disruption,   kind: cyber,        action: disruptive_cyber,     operation: varan_interior_grid }
+    - { id: drone_strike,       kind: drone_strike, action: drone_strike_military, losses: 0.01 }
+    - { id: border_clash,       kind: border_clash, action: border_clash_deaths,  kestrian_deaths: 3, varan_deaths: 2 }
+    - { id: offensive,          kind: offensive,    action: declare_war,          days: 14 }
+
+# Varan's scripted schedule (D-013). Days and hours are fixed so tests are reproducible.
+schedule:
+  - { day: 3, hour: 11, kind: border_clash, kestrian_deaths: 2, varan_deaths: 0, note: "Survey team clash at the brine field" }
+  - { day: 4, hour: 2,  kind: cyber_attack, operation: varan_eastern_grid, effect: destroy, fallback_operation: varan_interior_grid, fallback_effect: disrupt }
+  - { day: 4, hour: 6,  kind: narrative, narrative: president_fled, seed: { ossen_families: 0.003, ossen_workers: 0.002 } }
+  - { day: 6, hour: -1, kind: export_controls, goods: [rare_earth_magnet, gallium] }
+
+# The port's shipping lines (spec War-risk insurance). Sea imports scale with the share still calling.
+shipping_lines: [harrow_line, meridian_container, north_sea_bulk, atlas_feeder, kestrel_tankers]

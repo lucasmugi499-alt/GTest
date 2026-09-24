@@ -1,0 +1,131 @@
+# Society, politics and information for The Veyl Crossing (spec Politics, population and markets; Narrative spread).
+
+# Government axes, 0-100 (concept Emergency Powers: nations drift along four axes).
+#   information: open (100) ... closed (0); centralization: federal (0) ... centralized (100)
+#   rule_of_law: rule of law (100) ... rule by decree (0); market: market (100) ... command (0)
+government:
+  kestria: { information: 70, centralization: 45, rule_of_law: 70, market: 65, political_capital: 120, legitimacy: 50, intel_quality: 0.5, cyber_skill: 55 }
+  varan:   { information: 25, centralization: 80, rule_of_law: 35, market: 40, political_capital: 150, legitimacy: 50, intel_quality: 0.6, cyber_skill: 65 }
+
+# D-005: the six Kestrian segments, spread across Ossen East, Veyl and Kestria Interior.
+#   homes          residential loads whose power sets this segment's Power need
+#   trust          Trust in institutions, 0-100 (population-weighted average ≈ 58, the concept's starting readout)
+#   align          how closely the segment's beliefs match the government's positions, 0-100
+#   mobilization   willingness to protest, strike or volunteer, 0-100
+#   identity       Dignity offset for how the state treats this group
+#   unemployment   baseline unemployment, %
+segments:
+  - { id: ossen_families,        name: Ossen families,         province: kestria_east_ossen, population: 4_100_000,  livelihood: services,    tags: [eastern],           homes: [ossen_north_homes, ossen_south_homes],          trust: 52, align: 58, mobilization: 35, identity: 0,  unemployment: 6 }
+  - { id: ossen_workers,         name: Ossen industrial workers, province: kestria_east_ossen, population: 2_400_000, livelihood: industry,   tags: [eastern, industrial], homes: [ossen_west_homes],                             trust: 55, align: 56, mobilization: 45, identity: 0,  unemployment: 5 }
+  - { id: veyl_borderlanders,    name: Veyl borderlanders,     province: veyl,               population: 400_000,    livelihood: agriculture, tags: [border, rural],     homes: [veyl_homes],                                   trust: 48, align: 52, mobilization: 50, identity: -5, unemployment: 8 }
+  - { id: capital_professionals, name: Capital professionals,  province: kestria_interior,   population: 9_000_000,  livelihood: tech,        tags: [urban, tech],       homes: [interior_capital_homes],                       trust: 64, align: 60, mobilization: 30, identity: 0,  unemployment: 4 }
+  - { id: interior_heartland,    name: Heartland towns,        province: kestria_interior,   population: 12_000_000, livelihood: industry,    tags: [rural, heartland],  homes: [interior_north_homes, interior_south_homes],   trust: 56, align: 55, mobilization: 40, identity: 0,  unemployment: 6 }
+  - { id: interior_coast,        name: Coast and port towns,   province: kestria_interior,   population: 6_100_000,  livelihood: services,    tags: [coastal, older],    homes: [interior_port_homes],                          trust: 58, align: 57, mobilization: 25, identity: 0,  unemployment: 5 }
+
+# Four factions (concept Factions and Mandates). members: share of each segment that belongs.
+#   agenda   what the faction wants, as weights on the terms the sim measures (see balance.yaml society.agenda_terms)
+#   actions  what it does when angry and strong enough (spec: strikes, leaks, protests, no-confidence motion)
+factions:
+  - id: nationalists
+    name: Nationalists
+    members: { veyl_borderlanders: 0.5, interior_heartland: 0.3, ossen_workers: 0.15 }
+    institutions: 10
+    approval: 48
+    agenda: { rung: 1.0, mobilization: 0.5, emergency: 0.3, civil_precedents: 0.0, jobs: 0.2, power: 0.2 }
+    actions: [protest, no_confidence]
+  - id: civil_liberties
+    name: Civil Liberties
+    members: { capital_professionals: 0.35, interior_coast: 0.15 }
+    institutions: 15
+    approval: 55
+    agenda: { rung: -0.5, mobilization: -0.3, emergency: -1.0, civil_precedents: -1.0, jobs: 0.1, power: 0.1 }
+    actions: [leak, protest]
+  - id: labour
+    name: Organized Labour
+    members: { ossen_workers: 0.5, interior_heartland: 0.25, ossen_families: 0.2 }
+    institutions: 20
+    approval: 52
+    agenda: { rung: -0.3, mobilization: -0.5, emergency: -0.3, civil_precedents: -0.2, jobs: 1.0, power: 0.6 }
+    actions: [strike, protest]
+  - id: security
+    name: Security Establishment
+    members: { interior_heartland: 0.05, veyl_borderlanders: 0.1 }
+    institutions: 30
+    approval: 50
+    agenda: { rung: 0.3, mobilization: 1.0, emergency: 0.5, civil_precedents: 0.2, jobs: 0.0, power: 0.2 }
+    actions: [leak, no_confidence]
+
+# Corporations that matter to the slice's decisions (spec Corporations: comply when K + Loy/2 + P > 100 x_r + c).
+#   rival_revenue_share  x_r: share of revenue from Varan (Brightline has 22 million users there)
+corporations:
+  - { id: corp_tessera,    name: Tessera Semiconductor, loyalty: 55, rival_revenue_share: 0.15 }
+  - { id: corp_brightline, name: Brightline Social,     loyalty: 40, rival_revenue_share: 0.30 }
+  - { id: corp_ardent,     name: Ardent Defense,        loyalty: 60, rival_revenue_share: 0.05 }
+  - { id: corp_voltane,    name: Voltane Cells,         loyalty: 50, rival_revenue_share: 0.10 }
+  - { id: corp_harrow,     name: Harrow Maritime,       loyalty: 45, rival_revenue_share: 0.20 }
+
+# Platforms: share of each segment's contact that runs through them (spec Narrative spread: platform-weighted contact).
+platforms:
+  - { id: brightline, owner: corp_brightline, share: 0.7 }
+  - { id: other,      owner: none,            share: 0.3 }
+
+# Contact between segments: how much of segment s's feed comes from segment s' (rows: listener).
+contact:
+  ossen_families:        { ossen_families: 0.45, ossen_workers: 0.2,  veyl_borderlanders: 0.03, capital_professionals: 0.12, interior_heartland: 0.12, interior_coast: 0.08 }
+  ossen_workers:         { ossen_families: 0.25, ossen_workers: 0.4,  veyl_borderlanders: 0.03, capital_professionals: 0.1,  interior_heartland: 0.15, interior_coast: 0.07 }
+  veyl_borderlanders:    { ossen_families: 0.15, ossen_workers: 0.1,  veyl_borderlanders: 0.5,  capital_professionals: 0.05, interior_heartland: 0.15, interior_coast: 0.05 }
+  capital_professionals: { ossen_families: 0.05, ossen_workers: 0.03, veyl_borderlanders: 0.01, capital_professionals: 0.6,  interior_heartland: 0.16, interior_coast: 0.15 }
+  interior_heartland:    { ossen_families: 0.06, ossen_workers: 0.06, veyl_borderlanders: 0.03, capital_professionals: 0.15, interior_heartland: 0.55, interior_coast: 0.15 }
+  interior_coast:        { ossen_families: 0.04, ossen_workers: 0.03, veyl_borderlanders: 0.01, capital_professionals: 0.2,  interior_heartland: 0.17, interior_coast: 0.55 }
+
+# Narratives that can be seeded (spec Data model: Narrative).
+#   virality V, plausibility Pl; resonance by segment tag (a segment uses the mean over its tags, 1.0 for unknown tags)
+#   align_hit / trust_hit: Align and Trust points a segment loses at 100% belief
+#   established: faction approval shifts when believers pass 25% in any segment
+narratives:
+  - id: president_fled
+    name: "Deepfake: the President flees the capital"
+    origin: varan
+    virality: 50               # D-038: the spec's η caps how fast belief can form; this tips in ~2.5 days
+    plausibility: 0.6
+    resonance: { eastern: 1.4, industrial: 1.2, border: 1.3, rural: 1.1, heartland: 1.0, urban: 0.7, tech: 0.6, coastal: 0.9, older: 1.2 }
+    align_hit: 35
+    trust_hit: 12
+    established: { nationalists: -4, civil_liberties: -2, labour: -3, security: -2 }
+  - id: blackout_incompetence
+    name: "Varan line: Kestria's grid failed on its own"
+    origin: varan
+    virality: 15
+    plausibility: 0.5
+    resonance: { eastern: 1.3, industrial: 1.2, border: 1.0, rural: 1.0, urban: 0.8, tech: 0.7, coastal: 0.9, older: 1.0, heartland: 1.0 }
+    align_hit: 15
+    trust_hit: 6
+    established: { labour: -3, nationalists: -2 }
+  - id: chips_scandal
+    name: "Tessera chips in Varan's drones"
+    origin: kestria
+    virality: 25
+    plausibility: 0.85
+    resonance: { eastern: 1.2, industrial: 1.3, border: 1.2, rural: 1.0, urban: 1.1, tech: 1.2, coastal: 1.0, older: 0.9, heartland: 1.0 }
+    align_hit: 20
+    trust_hit: 8
+    established: { civil_liberties: -5, labour: -4, nationalists: -3 }
+
+# Precedents (spec Precedents: the n-th use costs base × 0.6^(n-1); from the 4th use the precedent is normalized).
+#   political_capital   base PC cost of the act
+#   approval_hit        base Align points every segment loses
+#   civil_liberties     true: normalizing it permanently lowers Dignity by 3
+precedents:
+  emergency_declaration: { political_capital: 30, approval_hit: 3, civil_liberties: false }
+  internet_shutdown:     { political_capital: 20, approval_hit: 5, civil_liberties: true }
+  fuel_requisition:      { political_capital: 10, approval_hit: 2, civil_liberties: false }
+  nationalization:       { political_capital: 60, approval_hit: 3, civil_liberties: false }
+  press_limits:          { political_capital: 15, approval_hit: 4, civil_liberties: true }
+  curfew:                { political_capital: 10, approval_hit: 3, civil_liberties: true }
+
+# Emergency powers, unlocked by declaring an emergency (concept Emergency Powers).
+emergency_powers:
+  fuel_requisition:  { precedent: fuel_requisition, refuel_multiplier: 3 }
+  press_limits:      { precedent: press_limits, virality_multiplier: 0.5 }
+  curfew:            { precedent: curfew, safety_bonus: 10, dignity_penalty: 5 }
+  internet_shutdown: { precedent: internet_shutdown, per_province: true }

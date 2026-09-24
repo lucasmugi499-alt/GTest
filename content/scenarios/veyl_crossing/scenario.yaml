@@ -10,11 +10,13 @@ player: kestria
 nations:
   - id: kestria
     name: Republic of Kestria
+    adjective: Kestrian
     doctrine: 0.46            # j: target stock = 7 + 83j ≈ 45 days of burn (spec Days of Cover and doctrine)
     spare_transformers: 1     # in reserve; restore a damaged substation in 14 days (spec Substations)
     mobile_substations: 2     # mobile emergency units: 30% capacity in 7 days
   - id: varan
     name: Varan Union
+    adjective: Varani
     doctrine: 0.5
     spare_transformers: 4
     mobile_substations: 4

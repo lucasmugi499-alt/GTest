@@ -80,6 +80,28 @@ public sealed class ContentNode
     public IReadOnlyList<string> Keys() => _map.Children.Keys.Select(k => ((YamlScalarNode)k).Value!).ToList();
 
     public string Str(string key) => Scalar(key);
+
+    /// <summary>A list of plain values, e.g. [a, b, c].</summary>
+    public IReadOnlyList<string> StrList(string key)
+    {
+        var node = Get(key);
+        if (node is not YamlSequenceNode seq) throw Error(key, node, "expected a list");
+        return seq.Children.Select((c, i) => c is YamlScalarNode s && s.Value is not null
+            ? s.Value : throw Error($"{key}[{i}]", c, "expected a single value")).ToList();
+    }
+
+    public int[] IntList(string key) => ParseList(key, s => int.Parse(s.Replace("_", ""), NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture));
+    public Fixed[] FixedList(string key) => ParseList(key, Core.Fixed.Parse);
+
+    private T[] ParseList<T>(string key, Func<string, T> parse)
+    {
+        var items = StrList(key);
+        try { return items.Select(parse).ToArray(); }
+        catch (Exception e) when (e is FormatException or OverflowException)
+        {
+            throw Error(key, Get(key), e.Message);
+        }
+    }
     public string? OptStr(string key) => Has(key) ? Scalar(key) : null;
 
     public long Long(string key) => Parse(key, s => long.Parse(s.Replace("_", ""), NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture));

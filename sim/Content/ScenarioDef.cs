@@ -10,7 +10,7 @@ public enum DetailLevel : byte
     Block = 1,
 }
 
-public sealed record NationDef(string Id, string Name, Fine Doctrine, int SpareTransformers, int MobileSubstations);
+public sealed record NationDef(string Id, string Name, string Adjective, Fine Doctrine, int SpareTransformers, int MobileSubstations);
 
 public sealed record ProvinceDef(
     string Id, string Name, string Owner, DetailLevel Detail, Fixed Corruption,
@@ -50,11 +50,16 @@ public sealed record ScenarioDef(
     IReadOnlyList<ImportDef> Imports)
 {
     public const string WorldSource = "world";
+    public const string None = "none";
 
-    public static ScenarioDef Read(ContentNode scenario, ContentNode facilities, ContentNode grid, ContentNode trade, Catalog catalog)
+    public SocietyDef Society { get; init; } = null!;
+    public ConflictDef Conflict { get; init; } = null!;
+
+    public static ScenarioDef Read(ContentNode scenario, ContentNode facilities, ContentNode grid, ContentNode trade,
+        ContentNode society, ContentNode conflict, Catalog catalog)
     {
         var nations = scenario.List("nations").Select(x => new NationDef(
-            x.Str("id"), x.Str("name"), x.Fine("doctrine"), x.Int("spare_transformers"), x.Int("mobile_substations"))).ToList();
+            x.Str("id"), x.Str("name"), x.Str("adjective"), x.Fine("doctrine"), x.Int("spare_transformers"), x.Int("mobile_substations"))).ToList();
 
         var provinces = scenario.List("provinces").Select(x => new ProvinceDef(
             x.Str("id"),
@@ -112,8 +117,13 @@ public sealed record ScenarioDef(
         var def = new ScenarioDef(
             scenario.Str("id"), scenario.Str("name"), scenario.Date("start_date"), scenario.Int("last_day"),
             (ulong)scenario.Long("default_seed"), scenario.Str("player"),
-            nations, provinces, coverList, demand, facilityList, plants, subs, ties, loads, edges, imports);
+            nations, provinces, coverList, demand, facilityList, plants, subs, ties, loads, edges, imports)
+        {
+            Society = SocietyDef.Read(society),
+            Conflict = ConflictDef.Read(conflict),
+        };
         def.Validate(catalog);
+        def.ValidateM3(catalog);
         return def;
     }
 
@@ -155,6 +165,84 @@ public sealed record ScenarioDef(
         void Province(string id, string what)
         {
             if (!provinceIds.Contains(id)) Fail($"{what} refers to unknown province '{id}'");
+        }
+    }
+
+    private void ValidateM3(Catalog catalog)
+    {
+        var nations = Nations.Select(n => n.Id).ToHashSet();
+        var provinces = Provinces.Select(p => p.Id).ToHashSet();
+        var loads = Loads.Select(l => l.Id).ToHashSet();
+        var subs = Substations.Select(x => x.Id).ToHashSet();
+        var so = Society;
+        var co = Conflict;
+        var segments = Unique(so.Segments.Select(x => x.Id), "segment");
+        var factions = Unique(so.Factions.Select(x => x.Id), "faction");
+        var narratives = Unique(so.Narratives.Select(x => x.Id), "narrative");
+        var precedents = Unique(so.Precedents.Select(x => x.Id), "precedent");
+        var ops = Unique(co.Operations.Select(x => x.Id), "operation");
+        var pools = Provinces.SelectMany(p => p.Labour.Select(l => l.Pool)).Concat(Facilities.SelectMany(f => f.Labour.Select(l => l.Pool))).ToHashSet();
+
+        foreach (var n in Nations)
+            if (!so.Government.Any(g => g.Nation == n.Id)) Fail($"government: no entry for nation '{n.Id}'");
+        foreach (var s in so.Segments)
+        {
+            if (!provinces.Contains(s.Province)) Fail($"segment '{s.Id}' has unknown province '{s.Province}'");
+            foreach (var h in s.Homes) if (!loads.Contains(h)) Fail($"segment '{s.Id}' has unknown home load '{h}'");
+        }
+        long kestrians = so.Segments.Sum(x => x.Population);
+        long homes = Loads.Where(l => l.Kind == "residential" && provinces.Contains(Substations.First(x => x.Id == l.Substation).Province)
+            && Provinces.First(p => p.Id == Substations.First(x => x.Id == l.Substation).Province).Owner == Player).Sum(l => l.Population);
+        if (kestrians != homes) Fail($"segments hold {kestrians:N0} people but the player's homes serve {homes:N0}");
+        foreach (var f in so.Factions)
+            foreach (var (seg, _) in f.Members) if (!segments.Contains(seg)) Fail($"faction '{f.Id}' has unknown member '{seg}'");
+        foreach (var nar in so.Narratives)
+        {
+            if (!nations.Contains(nar.Origin)) Fail($"narrative '{nar.Id}' has unknown origin '{nar.Origin}'");
+            foreach (var (fac, _) in nar.Established) if (!factions.Contains(fac)) Fail($"narrative '{nar.Id}' shifts unknown faction '{fac}'");
+        }
+        foreach (var p in so.Platforms)
+            if (p.Owner != None && !so.Corporations.Any(c => c.Id == p.Owner)) Fail($"platform '{p.Id}' has unknown owner '{p.Owner}'");
+        foreach (var e in so.EmergencyPowers)
+            if (!precedents.Contains(e.Precedent)) Fail($"emergency power '{e.Id}' has unknown precedent '{e.Precedent}'");
+
+        foreach (var o in co.Operations)
+        {
+            if (!nations.Contains(o.Attacker)) Fail($"operation '{o.Id}' has unknown attacker");
+            if (!provinces.Contains(o.TargetProvince)) Fail($"operation '{o.Id}' has unknown target province");
+            foreach (var t in o.Targets) if (!subs.Contains(t)) Fail($"operation '{o.Id}' targets unknown substation '{t}'");
+        }
+        if (!provinces.Contains(co.Front.Province)) Fail("front has unknown province");
+        catalog.Good(co.Front.DroneGood);
+        foreach (var side in co.Front.Sides)
+        {
+            if (!nations.Contains(side.Nation)) Fail($"front side '{side.Nation}' is not a nation");
+            if (side.DroneDesign is not null) catalog.Design(side.DroneDesign);
+        }
+        foreach (var b in co.Brigades.Concat(co.Mobilization.Select(m => m.ReserveBrigade)))
+        {
+            if (!nations.Contains(b.Nation)) Fail($"brigade '{b.Id}' has unknown nation");
+            if (b.Home != None && !segments.Contains(b.Home)) Fail($"brigade '{b.Id}' has unknown home segment '{b.Home}'");
+        }
+        foreach (var m in co.Mobilization)
+            foreach (var (prov, pool, _) in m.SkilledReservists)
+            {
+                if (!provinces.Contains(prov)) Fail($"mobilization: unknown province '{prov}'");
+                if (!pools.Contains(pool)) Fail($"mobilization: unknown labour pool '{pool}'");
+            }
+        foreach (var r in co.Repertoire)
+        {
+            if (r.Narrative is not null && !narratives.Contains(r.Narrative)) Fail($"repertoire '{r.Id}': unknown narrative");
+            if (r.Operation is not null && !ops.Contains(r.Operation)) Fail($"repertoire '{r.Id}': unknown operation");
+            foreach (var (seg, _) in r.Seed) if (!segments.Contains(seg)) Fail($"repertoire '{r.Id}': unknown segment '{seg}'");
+        }
+        foreach (var x in co.Schedule)
+        {
+            foreach (var o in new[] { x.Operation, x.FallbackOperation })
+                if (o is not null && !ops.Contains(o)) Fail($"schedule day {x.Day}: unknown operation '{o}'");
+            if (x.Narrative is not null && !narratives.Contains(x.Narrative)) Fail($"schedule day {x.Day}: unknown narrative");
+            foreach (var g in x.Goods) catalog.Good(g);
+            foreach (var (seg, _) in x.Seed) if (!segments.Contains(seg)) Fail($"schedule day {x.Day}: unknown segment '{seg}'");
         }
     }
 

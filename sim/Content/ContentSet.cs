@@ -21,8 +21,10 @@ public sealed record ContentSet(string Root, Balance Balance, Catalog Catalog, S
         var fac = ContentNode.LoadFile(Path.Combine(dir, "facilities.yaml"), wrapListAs: "facilities");
         var grid = ContentNode.LoadFile(Path.Combine(dir, "grid.yaml"));
         var trade = ContentNode.LoadFile(Path.Combine(dir, "trade.yaml"));
-        var scenarioDef = ScenarioDef.Read(sc, fac, grid, trade, catalog);
-        foreach (var n in new[] { sc, fac, grid, trade }) n.EnsureAllUsed();
+        var society = ContentNode.LoadFile(Path.Combine(dir, "society.yaml"));
+        var conflict = ContentNode.LoadFile(Path.Combine(dir, "conflict.yaml"));
+        var scenarioDef = ScenarioDef.Read(sc, fac, grid, trade, society, conflict, catalog);
+        foreach (var n in new[] { sc, fac, grid, trade, society, conflict }) n.EnsureAllUsed();
 
         return new ContentSet(contentDir, balance, catalog, scenarioDef);
     }

@@ -11,14 +11,28 @@ public sealed record Balance(
     EconomyBalance Economy,
     FabBalance Fab,
     GridBalance Grid,
-    CountermeasureBalance Countermeasures)
+    CountermeasureBalance Countermeasures,
+    SocietyBalance Society,
+    InformationBalance Information,
+    CyberBalance Cyber,
+    MilitaryBalance Military,
+    MobilizationBalance Mobilization,
+    EscalationBalance Escalation,
+    MarketsBalance Markets)
 {
     public static Balance Read(ContentNode root) => new(
         SimBalance.Read(root.Child("sim")),
         EconomyBalance.Read(root.Child("economy")),
         FabBalance.Read(root.Child("fab")),
         GridBalance.Read(root.Child("grid")),
-        CountermeasureBalance.Read(root.Child("countermeasures")));
+        CountermeasureBalance.Read(root.Child("countermeasures")),
+        SocietyBalance.Read(root.Child("society")),
+        InformationBalance.Read(root.Child("information")),
+        CyberBalance.Read(root.Child("cyber")),
+        MilitaryBalance.Read(root.Child("military")),
+        MobilizationBalance.Read(root.Child("mobilization")),
+        EscalationBalance.Read(root.Child("escalation")),
+        MarketsBalance.Read(root.Child("markets")));
 }
 
 public sealed record SimBalance(CrisisBalance Crisis, int HashCheckIntervalDays)
@@ -60,6 +74,7 @@ public static class PriorityTiers
 public sealed record EconomyBalance(
     IReadOnlyDictionary<string, PriorityTier> PriorityByKind,
     int MilitaryHighFromMobilization,
+    string MilitaryKind,
     Fixed EfficiencyGrowthPerDay,
     Fixed EfficiencyMax,
     Fixed EfficiencyMaxDualUse,
@@ -84,6 +99,7 @@ public sealed record EconomyBalance(
         return new EconomyBalance(
             tiers,
             n.Int("military_high_from_mobilization"),
+            n.Str("military_kind"),
             e.Fixed("growth_per_day"), e.Fixed("max"), e.Fixed("max_dual_use"), e.Fixed("min"),
             e.Fixed("retool_same_line"), e.Fixed("retool_new_line"),
             d.Fixed("base_days"), d.Fixed("span_days"), d.Fixed("jit_efficiency_bonus"),

@@ -22,6 +22,7 @@ economy:
     residential: low
     datacentre: low
   military_high_from_mobilization: 2
+  military_kind: military       # consumers of this kind get the military tier rule and mobilization output
   # Spec Efficiency and retooling.
   efficiency:
     growth_per_day: 0.01
@@ -80,3 +81,192 @@ countermeasures:
   firmware_days: 5
   revision_cap: 1
   revision_days: 30                # D-030: the spec gives no time for a hardware revision
+
+# Spec Politics, population and markets.
+society:
+  # Needs → Satisfaction weights by livelihood (spec: weights set by the segment's livelihood). D-034.
+  need_weights:
+    services:    { power: 0.2,  prices: 0.2,  jobs: 0.15, safety: 0.15, connectivity: 0.1,  services: 0.1, dignity: 0.1 }
+    industry:    { power: 0.15, prices: 0.2,  jobs: 0.25, safety: 0.1,  connectivity: 0.05, services: 0.1, dignity: 0.15 }
+    agriculture: { power: 0.15, prices: 0.25, jobs: 0.15, safety: 0.2,  connectivity: 0.05, services: 0.1, dignity: 0.1 }
+    tech:        { power: 0.15, prices: 0.1,  jobs: 0.15, safety: 0.1,  connectivity: 0.25, services: 0.1, dignity: 0.15 }
+  smoothing_days: 30              # Satisfaction smoothed over 30 days...
+  fast_smoothing_days: 7          # ...or 7 for Power and Safety
+  approval_satisfaction_weight: 0.6
+  approval_align_weight: 0.4
+  prices:
+    base: 50
+    per_point: 10                 # Prices need = 50 + 10 × (wage growth − inflation)
+    wage_growth: 2.5              # D-034: % per year, fixed in the slice (no markets)
+    base_inflation: 2             # D-034: m − g, fixed in the slice
+    shortage_weight: 0.5          # π += 0.5 × share of goods in critical shortage (%)
+    import_price_weight: 0.3      # π += 0.3 × import price change (%)
+    insurance_pass_through: 2     # D-034: import prices rise 2% per point of war-risk multiplier above 1
+  jobs_per_unemployment_point: 5
+  labour_force_share: 0.5         # D-034: share of a segment's people in its labour force
+  safety_per_incident: 2
+  baseline_incidents_per_100k: 6  # D-034: violent incidents per 100,000 per month in peacetime
+  dignity_base: 50
+  dignity_axis_factor: 0.2        # D-034: Dignity + 0.2 × (information axis − 50)
+  dignity_normalized_penalty: 3
+  services_transit: 0.9           # D-034: transit availability (not simulated)
+  connectivity_kind: cell_tower   # which loads carry each service need
+  water_kind: water
+  health_kind: hospital
+  civil_liberties_faction: civil_liberties   # the faction that reacts to civil-liberties precedents
+  trust_recovery_per_day: 0.02    # D-034: Trust returns this share of the gap to its start each day
+  political_capital_weekly_base: 2
+  political_capital_per_approval_point: 0.1
+  political_capital_cap: 300
+  political_capital_per_rally_point: 0.1   # D-035: "plus any rally effect"
+  rally_on_attack: 20
+  rally_decay_per_week: 1
+  faction_smoothing: 0.5          # D-035: weekly approval moves this share of the way to agenda alignment
+  faction_standing_decay: 0.1     # D-035: storylet-driven standing fades 10% a week
+  faction_action_approval_below: 30
+  faction_action_leverage_above: 20
+  faction_action_chance: 0.1      # × Leverage ÷ 50, weekly
+  strike_labour_cut: 0.2          # D-035: a strike idles 20% of member provinces' workers for a week
+  strike_days: 7
+  protest_incidents: 5            # D-035: incidents per 100,000 a protest adds to its member segments
+  agenda_rung: 10                 # D-035: agenda terms, points per unit
+  agenda_mobilization: 15
+  agenda_emergency: 30
+  agenda_civil_precedent: 10
+  agenda_jobs: 0.5
+  agenda_power: 0.5
+  emergency_end_cost_per_month: 10
+  emergency_end_cost_max: 100
+  backsliding_per_power_month: 1
+  backsliding_first_precedent: 5
+  backsliding_recovery_per_month: 0.5
+  drift_factor: 0.02
+  precedent_repeat_factor: 0.6
+  precedent_normalized_at: 4
+  precedent_faction_hit: 10       # D-035: Civil Liberties standing lost on a civil-liberties precedent (× 0.6^(n−1))
+  nationalization_loyalty_hit: 10 # spec: nationalizing lowers every other corporation's Loyalty by 10
+  exhaustion_kia: 3
+  exhaustion_blackout: 5
+  exhaustion_rationing: 2
+  exhaustion_victory: 3
+  legitimacy_answering_attack: 70
+  protest_below_war_support: 40
+  mobilization_blocked_below_war_support: 25
+
+# Spec Narrative spread.
+information:
+  beta: 0.6
+  eta: 0.5
+  gamma: 0.02
+  gamma_established: 0.005
+  established_share: 0.25
+  trust_divisor: 150
+  counter_gamma_multiplier: 3
+  counter_days: 7
+  counter_min_trust: 50           # concept: going live on TV only works while trust is above 50%
+  prebunking_per_day: 0.01
+  prebunking_cost: 5              # D-036: Political Capital to start prebunking a narrative
+  takedown_weight: 0.3
+  takedown_compliance_cost: 20    # D-036: c for a takedown request
+  rumor_crisis_hours: 12
+  rumor_horizon_hours: 720
+
+# Spec Cyber access and detection; Payloads, effects and attribution.
+cyber:
+  access_skill_divisor: 10
+  detection_base: 0.03
+  detection_scale: 50
+  defence_gain_on_detection: 10
+  min_access_disrupt: 40
+  min_access_manipulate: 60
+  min_access_destroy: 70
+  disruption_base_hours: 12
+  attribution_direct_max: 0.9
+  attribution_proxy_max: 0.6
+  attribution_days: 14
+  burn_patch_chance: 0.5
+  burn_patch_days: 30
+  forensic_sweep_cost: 15         # concept: a forensic sweep would have cost 15 capital
+
+# Spec Combat and fronts; Unit quality; Casualties.
+military:
+  combat_k: 0.01
+  quality_training: 0.35
+  quality_equipment: 0.25
+  quality_cohesion: 0.2
+  quality_experience: 0.2
+  quality_scale: 50
+  recon_drones: 40
+  recon_satellite: 30
+  recon_sigint: 20
+  recon_humint: 10
+  drone_cover_full_density: 30    # D-037: drones per km per day for full surveillance cover
+  lock_drone_density: 30
+  lock_detection: 0.6
+  locked_lambda: 0.1
+  advance_threshold: 1.5
+  vmax_mechanized: 3
+  vmax_infantry: 1
+  kill_zone_base: 5
+  kill_zone_per_density: 0.3
+  kill_zone_max: 25
+  truck_loss_per_density: 0.002   # 0.02 × ρ ÷ 10
+  cohesion_loss_factor: 150
+  cohesion_recovery: 1
+  experience_per_combat_day: 0.5
+  killed_share: 0.25              # one killed to three wounded
+  wounded_return_share: 0.5
+  wounded_return_days: 60
+  medical_min: 0.7
+  medical_kind: hospital          # D-037: medical supply = how well loads of this kind are running
+  morale_min: 0.5
+  morale_max: 1.2
+  morale_per_war_support: 0.01    # D-037: M = 1 + (WS − 50) ÷ 100
+  supply_cover_days: 7            # D-037: supply fill = diesel at the front ÷ 7 days of the brigades' burn
+  diesel_per_1000_per_day: 2      # D-037: tonnes of diesel per 1,000 soldiers per day at the front
+  active_days: 3                  # D-037: a front stays active this many days after the last attack order
+
+# Spec Mobilization levels and Manpower pool.
+mobilization:
+  days_to_reach: [0, 7, 14, 30, 30]
+  military_output: [1, 1.2, 1.8, 3, 4.5]
+  exhaustion_per_week: [0, 0, 0.2, 0.5, 1.2]
+  step_down_days: 30
+  recruitment_law: { volunteer: 0.01, selective: 0.03, universal: 0.08, total: 0.15 }
+
+# Spec Escalation meter, Perception, Red lines, Personalities.
+escalation:
+  rungs: [0, 15, 30, 45, 60, 75, 90]
+  decay_per_week: 1
+  decay_blocked_by_weight: 3
+  actions:
+    strike_homeland_infrastructure: { weight: 10, floor: 75 }
+    declare_war:                    { weight: 10, floor: 60 }
+    anti_satellite:                 { weight: 9,  floor: 0 }
+    border_clash_deaths:            { weight: 8,  floor: 45 }
+    drone_strike_military:          { weight: 7,  floor: 0 }
+    disruptive_cyber:               { weight: 6,  floor: 0 }
+    cyber_intrusion_detected:       { weight: 4,  floor: 0 }
+    influence_detected:             { weight: 3,  floor: 0 }
+    export_controls:                { weight: 2,  floor: 0 }
+  rival_perception: 1
+  rival_perception_civilian_harm: 1.5
+  public_perception_visible: 1.5
+  public_perception_hidden: 0.3
+  world_perception: 0.8
+  red_line_sd: 10
+  red_line_domestic_shift: 10
+  red_line_estimate_sd: 20
+  retaliation_delay_min: 1
+  retaliation_delay_max: 14
+  personalities:
+    cautious:   { red_line: 70, retaliation: 0.8 }
+    pragmatic:  { red_line: 60, retaliation: 1 }
+    aggressive: { red_line: 50, retaliation: 1.2 }
+    reckless:   { red_line: 40, retaliation: 1.3 }
+
+# Spec Markets: war-risk insurance only (D-009).
+markets:
+  insurance_from_rung: 2
+  insurance_skip_from_multiplier: 4
+  insurance_skip_chance: 0.2
