@@ -16,8 +16,8 @@ A near-future grand strategy game with deep simulation and a story engine on top
 | M2 Economy and grid | Production, stockpiles, transport, fab, grid, daily readout | Done |
 | M3 Society and conflict | Politics, information, cyber, military (light), escalation | Done |
 | M4 Narrative | Storylets, Director, Chronicle; playable as text | Done |
-| M5 Godot UI | Map, Cascade view, Brief, storylet dialog, readouts | Next |
-| M6 Balance | 1,000-seed batch runs and metrics | |
+| M5 Godot UI | Map, Cascade view, Brief, storylet dialog, readouts | Done |
+| M6 Balance | 1,000-seed batch runs and metrics | Next |
 
 ## What you need
 
@@ -104,18 +104,30 @@ dotnet run --project tools -- hash --seed 42
 dotnet run --project tools
 ```
 
-**Open the game in the Godot editor:**
+**Play the game in Godot.** Open the project in the Godot editor:
 
 ```bash
 open -a /Applications/Godot_mono.app --args --path ~/Desktop/Cascade/game --editor
 ```
 
-Then press the ▶ Play button at the top right. At M0 you'll see a single line of placeholder text.
-
-**Run the game without the editor:**
+Then press ▶ Play at the top right. Or run the game straight away, without the editor:
 
 ```bash
 /Applications/Godot_mono.app/Contents/MacOS/Godot --path ~/Desktop/Cascade/game
+```
+
+How to play:
+- **The clock** starts paused. ⏸ pauses; ▶ 1, ▶▶ 2 and ▶▶▶ 3 run at 4, 2 and 1 seconds per day. In Crisis Time the clock moves an hour at a time. **Step** moves one step by hand.
+- **Big decisions** pause the game and open a card; click a choice. Greyed-out choices aren't available (usually not enough Political Capital). Smaller cards wait in the **Brief** (top right).
+- **Map** shows the provinces: darker means more people without power, a red outline means Crisis Time. The Veyl front is on the border; the escalation gauge and your estimate of Varan's red line are bottom left.
+- **Cascade** draws the supply chain from power and imports to the front, green, amber or red. Hover any box to see why.
+- **Society** has segments, factions, narratives and cyber. The **Chronicle** opens at the end of Day 90.
+- **Orders** (right) cover mobilization, emergency powers, the forensic sweep, firmware patches, attacking at Veyl, and repairs for each damaged substation.
+
+**Watch Godot play itself** (for checking a build). This runs to Day 90, prints the final hash and scores, and quits:
+
+```bash
+/Applications/Godot_mono.app/Contents/MacOS/Godot --headless --path ~/Desktop/Cascade/game -- --auto random
 ```
 
 ## Folder layout

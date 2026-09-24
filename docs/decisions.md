@@ -390,3 +390,16 @@ Five scores, each 0 to 100 (balance.yaml `chronicle`):
   - who really ran each cyber attack, and how sure your analysts ended up
   - whether a missed seed could have been defused
   - every character's secrets
+
+## D-042 · The Godot UI
+
+- **Architecture:**
+  - `SimController` owns the simulation and its clock.
+  - The UI reads `SimSnapshot`, `CascadeGraph` and `DecisionView`, and sends orders (including `ChooseStoryletOrder`) through the controller. The game project never writes sim state.
+- **Speeds** 1 to 3 are 4, 2 and 1 seconds per day (D-011). In Crisis Time each step is an hour (one twenty-fourth of that).
+- **Major decisions** pause the clock and open the dialog; closing it resumes at speed 1.
+- **The map** is a schematic, not geography: each province is a rectangle placed by content (`map` in scenario.yaml).
+- **The Cascade graph** is laid out by longest path from a source: power and imports on the left, the front on the right.
+  - Health: facilities are green at 95%+ of their capacity after the fab ramp, amber at 50%+, red below.
+  - Goods are red under 14 days of cover and amber below their replacement lead time. Substations are red when damaged, amber on a mobile unit.
+- **Screenshot mode** (`--screenshot FILE --screenshot-day D --tab N`) and **autopilot mode** (`--auto MODE`) let a build be checked without a person at the keyboard.
