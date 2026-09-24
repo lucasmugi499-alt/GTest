@@ -21,3 +21,7 @@ These came from the original slice brief:
 - **Transport:** min-cost flow per good class, and weekly route recomputation. See D-007.
 - **Forecast:** the weekly 90-day forecast copy, and the 30 ms daily re-run after shocks for the Cascade lens. See D-008.
 - **Threading:** running phases in parallel by region. See D-010.
+- **Sovereignty Score:** the share of each product line's value sourced at home, walked through the recipe tree (spec Sovereignty Score). It's cheap to add once goods have origins; not needed for the slice's decisions.
+- **Holding cost of stockpiles:** 1.5% of stock value per month (spec doctrine). There is no budget in the slice yet.
+- **Multi-hop tie-lines:** transit through a neighbour's grid (D-028).
+- **Per-facility input stocks:** the spec's sample record keeps stock at the facility; the slice keeps it per province (D-026).

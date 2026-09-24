@@ -190,3 +190,69 @@ Refines the spec's Crisis sub-ticks.
 - The hash is 64-bit XxHash3.
 - It covers the scenario ID, the seed, the day and hour position, every store column, pending orders and scheduled events.
 - `cascade run` prints it every 30 days (spec: the desync check every 30 ticks).
+
+## D-025 · What M2 builds and what moves to M3
+
+- **Built in M2:**
+  - The export-control mechanism: an event that blocks the source nation's import routes for chosen goods. Cargo already at sea still arrives.
+  - The countermeasure decay formula, as an extra weekly system (`WeeklyCountermeasures`), since the spec's weekly list doesn't include it.
+- **Moves to M3:**
+  - War-risk insurance, because it needs the escalation rung.
+  - Varan's scripted Day 4 and Day 6 actions. Until then the headless runner has `--trip` and `--export-controls` to inject the same shocks.
+
+## D-026 · Who gets stock, and what counts as burn
+
+- **Phase 3** allocates each province's stock of each good across every claim at once: facility inputs (r_i × C, as the formula's S_i ÷ (r_i C) implies) and final demand, by priority tier.
+- **Phase 5** consumes the share set aside for final demand. Phase 4 can't ship it away in between.
+- **Burn** is what was actually consumed (inputs used plus final demand served plus backup diesel), not what was demanded. So a shortage shows as a falling stock, not a rising burn.
+- **Days of Cover** is national, per good. Goods made at home have no replacement lead time, so they only get the critical flag (below 14 days).
+
+## D-027 · Default priorities not in the spec
+
+- **Cell towers** are High. The spec names hospitals, water and grid repair as Critical, industry Normal, and consumers and data centres Low, but not cell towers.
+- **Refuelling backup generators** uses the same tier allocation, so services in the same tier share a truck shortage proportionally instead of the first in the list taking it all.
+- **Example:** Ossen East's trucks (1.5 t/h) cover half of the two water pumps' and the hospital's burn, so all three drain at half speed and the cell towers get nothing.
+
+## D-028 · Grid details the spec leaves open
+
+- **Repair crews:**
+  - A spare-transformer or mobile-unit job goes at full speed with 300 grid linemen.
+  - With fewer linemen in the province, every job there slows proportionally. This is how mobilizing reservists (M3) slows grid repair.
+  - A new transformer is manufacturing time and needs no crew.
+- **Collapse:** a hit that knocks out at least **75%** of a region's load collapses it. The region then restores 25% of its load per day if it has a black-start plant; otherwise only while a tie-line neighbour is energized.
+  - The 75% keeps the Day 4 attack (68% of Ossen's load) a 4.1-million-person blackout, as in the concept, rather than a full regional collapse.
+- **Tie-lines** trade surplus in tie-line ID order in a single pass. There is no multi-hop transit.
+- **Mobile units:**
+  - A mobile unit gives 30% capacity once installed.
+  - It stays until a spare or new transformer finishes, then returns to the national pool.
+- **Repair timing:** repairs advance at the start of each province's day: in the hour-0 pass for a crisis province, in the daily pass otherwise. A substation finished today carries load all day.
+
+## D-029 · Import ordering
+
+- Each open import route orders EMA burn + (target stock − position) ÷ 14 days, up to its capacity.
+- Position is the nation's stock plus everything in transit. Target is the doctrine's (7 + 83j) days of burn.
+- The 14 days is authored; the spec only says flows follow cached routes.
+
+## D-030 · Countermeasure details
+
+- The design **cap** decays at half e's weekly rate. If it didn't decay, firmware patches would always restore 1.0 and hardware revisions would never be worth it.
+- A **hardware revision** takes 30 days of Design Bureau time (the spec gives none). It sets both effectiveness and cap to 1.0, and retools every line building the design at similarity 0.8.
+- The Design Bureau works on one patch or revision at a time.
+- Varan's adaptation A is a single balance value (1.0) for now. The part driven by how often the design is used arrives with military sorties in M3.
+
+## D-031 · The Just-in-Time efficiency bonus
+
+- The bonus "+3% × (1 − j)" multiplies E, and the result is capped at 1.0.
+- **Why:** a line can never run above its capacity or consume more input than its allocation.
+
+## D-032 · Scrapped work in process
+
+- A steadily running fab holds capacity × 42 days of wafer starts.
+- While it ramps back after an interruption it holds that amount × (ramp days done ÷ 21).
+- An interruption scraps what the line holds, so a fab that stays dark scraps once, not every day.
+
+## D-033 · Domestic distribution
+
+- Along each edge, each way, stock moves to level the two provinces' local Days of Cover, within the edge's daily tonnes for that good's class.
+- A province that doesn't use a good passes all of it on.
+- **Why:** the first rule tried, "ship above your target stock", never moved anything. The port province's stock never reached target while imports were still counted as in transit, so Ossen East ran out of wafer blanks in a quiet world.

@@ -12,8 +12,8 @@ A near-future grand strategy game with deep simulation and a story engine on top
 | --- | --- | --- |
 | M0 Setup | Tools, folder layout, this README | Done |
 | M1 Sim core | Fixed-point math, RNG, scheduler, content loader, state hash | Done |
-| M2 Economy and grid | Production, stockpiles, transport, fab, grid, daily readout | Next |
-| M3 Society and conflict | Politics, information, cyber, military (light), escalation | |
+| M2 Economy and grid | Production, stockpiles, transport, fab, grid, daily readout | Done |
+| M3 Society and conflict | Politics, information, cyber, military (light), escalation | Next |
 | M4 Narrative | Storylets, Director, Chronicle; playable as text | |
 | M5 Godot UI | Map, Cascade view, Brief, storylet dialog, readouts | |
 | M6 Balance | 1,000-seed batch runs and metrics | |
@@ -48,11 +48,19 @@ dotnet build
 dotnet test
 ```
 
-**Run the sim in the terminal** (the headless runner). This plays Day 0 to Day 90 and prints one line per day, with the state hash every 30 days. Nothing happens in the world yet; the systems arrive in M2 and M3.
+**Run the sim in the terminal** (the headless runner). This plays Day 0 to Day 90 and prints one line per day: legacy chip output, drones built, Days of Cover for magnets and flight controllers, people without power, substations down, the hospital's generator fuel, and which provinces are in Crisis Time. The state hash appears every 30 days.
 
 ```bash
 dotnet run --project tools -- run
 ```
+
+**Watch the Veyl cascade.** Until Varan's schedule arrives in M3, you can inject the shocks yourself: the Day 4 02:00 substation attack, repairs with whatever is in reserve, and Varan's Day 6 export controls:
+
+```bash
+dotnet run --project tools -- run --trip 4:2 --repair both --export-controls 6
+```
+
+Add `--verbose` for the grid, fab, backup generators and lowest stockpiles every day, and `--days 14` to stop early.
 
 **Check determinism yourself.** Run this twice: both runs must print the same hash. A different `--seed` gives a different hash.
 
