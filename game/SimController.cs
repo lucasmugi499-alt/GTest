@@ -44,6 +44,9 @@ public partial class SimController : Node
         return System.IO.File.Exists(System.IO.Path.Combine(beside, ContentSet.BalanceFile)) ? beside : ContentSet.FindContentDir();
     }
 
+    /// <summary>Tells every panel to redraw from the current snapshot (after the UI is built).</summary>
+    public void Announce() => Changed?.Invoke();
+
     public void SetSpeed(int speed)
     {
         speed = Math.Clamp(speed, 0, 3);
@@ -58,7 +61,7 @@ public partial class SimController : Node
 
     public void Choose(DecisionView d, int choice)
     {
-        Sim.Orders.Enqueue(new ChooseStoryletOrder(Sim.World.Nations.Player, d.Seq, choice));
+        Sim.Orders.Enqueue(new ChooseStoryletOrder(Snapshot.Player, d.Seq, choice));
         _answered.Add(d.Seq);
         Changed?.Invoke();
     }
@@ -74,8 +77,8 @@ public partial class SimController : Node
     {
         if (Sim.IsFinished) return;
         _lastStepWasHour = Sim.StepHour() == StepResult.HourAdvanced;
-        _answered.RemoveWhere(seq => Sim.World.Storylets.Find(seq) is { Pending: false });
         Snapshot = SimSnapshot.Of(Sim);
+        _answered.RemoveWhere(seq => !Snapshot.Decisions.Any(d => d.Seq == seq)); // resolved: no longer pending
         Changed?.Invoke();
         if (Sim.IsFinished) { Speed = 0; Finished?.Invoke(); return; }
         var major = Snapshot.Decisions.FirstOrDefault(d => d.Major && !_answered.Contains(d.Seq));

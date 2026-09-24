@@ -79,7 +79,7 @@ public static class Cyber
         ops.Access.Set(op, Fixed.Zero);
         ops.Defence.Set(op, ops.Defence.Pending(op) + ctx.Balance.Cyber.DefenceGainOnDetection);
         Escalation.Record(ctx, ops.Attacker[op], ops.Victim[op], "cyber_intrusion_detected",
-            $"{how}: {ctx.World.Nations.Adjectives[ops.Attacker[op]]} access in {ops.Defs[op].TargetProvince.Replace('_', ' ')} systems found and closed.");
+            $"{how}: {ctx.World.Nations.Adjectives[ops.Attacker[op]]} access in {ctx.World.Provinces.Names[ctx.World.Provinces.IdOf(ops.Defs[op].TargetProvince)]} systems found and closed.");
     }
 
     /// <summary>c(t) = c_max (1 − e^(−t/14)); c_max 0.9 direct, 0.6 through a proxy.</summary>

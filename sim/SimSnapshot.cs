@@ -29,7 +29,9 @@ public sealed record SimSnapshot(
     FrontView Front,
     IReadOnlyList<LogEntry> Log,
     IReadOnlyList<DecisionView> Decisions,
-    bool IsFinished)
+    bool IsFinished,
+    int Player,
+    string PlayerKey)
 {
     /// <summary>Snapshot from the point of view of the player nation.</summary>
     public static SimSnapshot Of(Simulation sim)
@@ -58,7 +60,7 @@ public sealed record SimSnapshot(
             provinces[i] = new ProvinceView(p.Keys[i], p.Names[i], w.Nations.Keys[p.Owner[i]], p.InCrisis[i],
                 p.Corruption[i].ToDoubleForUi(), demand > 0 ? served / demand : 1, dark, p.Collapsed[i],
                 def.Map[0], def.Map[1], def.Map[2], def.Map[3], subsDown, subsTotal, p.InternetShutdown[i],
-                Enumerable.Range(0, w.Loads.Count).Where(l => w.Loads.Province[l] == i).Sum(l => w.Loads.Population[l]));
+                Enumerable.Range(0, w.Loads.Count).Where(l => w.Loads.Province[l] == i).Sum(l => w.Loads.Population[l]), i);
         }
 
         var produced = new double[w.Catalog.Goods.Count];
@@ -100,7 +102,8 @@ public sealed record SimSnapshot(
                 w.Substations.CapacityFactor(s, sim.Balance.Grid).ToDoubleForUi(),
                 ((RepairKind)w.Substations.Repair[s]).ToString(),
                 (w.Substations.RepairRequired[s] - w.Substations.RepairProgress[s]).ToDoubleForUi(),
-                w.Substations.MobileAssigned[s]));
+                w.Substations.MobileAssigned[s], ((SubstationState)w.Substations.State[s]).ToString(),
+                w.Nations.Keys[p.Owner[w.Substations.Province[s]]], s));
         }
 
         var services = new List<ServiceView>();
@@ -114,7 +117,8 @@ public sealed record SimSnapshot(
 
         var designs = new List<DesignView>();
         for (int d = 0; d < w.Designs.Count; d++)
-            designs.Add(new DesignView(w.Designs.Keys[d], w.Designs.Effectiveness[d].ToDoubleForUi(), w.Designs.Cap[d].ToDoubleForUi()));
+            designs.Add(new DesignView(w.Designs.Keys[d], w.Designs.Effectiveness[d].ToDoubleForUi(), w.Designs.Cap[d].ToDoubleForUi(),
+                w.Catalog.Designs[d].Name, d));
 
         var pol = w.Politics;
         int rival = Enumerable.Range(0, w.Nations.Count).First(n => n != player);
@@ -129,7 +133,9 @@ public sealed record SimSnapshot(
             pol.InsuranceMultiplier[player].ToDoubleForUi(), pol.LinesCalling[player], w.Shipping.Count,
             pol.KiaTotal[player].ToDoubleForUi(),
             Enumerable.Range(0, w.Precedents.Types).Where(t => w.Precedents.Uses[w.Precedents.At(player, t)] > 0)
-                .Select(t => $"{w.Precedents.Defs[t].Id}×{w.Precedents.Uses[w.Precedents.At(player, t)]}").ToList());
+                .Select(t => $"{w.Precedents.Defs[t].Id}×{w.Precedents.Uses[w.Precedents.At(player, t)]}").ToList(),
+            w.Nations.SpareTransformers[player], w.Nations.MobileSubstations[player],
+            sim.Scenario.Conflict.Mobilization.FirstOrDefault(m => m.Nation == w.Nations.Keys[player])?.ReservistsByLevel ?? []);
 
         var segments = Enumerable.Range(0, w.Segments.Count).Select(i => new SegmentView(
             w.Segments.Keys[i], w.Segments.Defs[i].Name, w.Segments.Population[i],
@@ -146,7 +152,10 @@ public sealed record SimSnapshot(
             Enumerable.Range(0, w.Segments.Count).Count(s => w.Narratives.Established[w.Narratives.At(n, s)]),
             w.Narratives.RumorHours[n].ToDoubleForUi(), w.Narratives.Takedown[n], w.Narratives.CounterUntil[n] >= sim.Day)).ToList();
 
-        var operations = Enumerable.Range(0, w.Operations.Count).Select(i => new OperationView(
+        // Fog of war: the player sees its own operations, and a rival's only once it has been detected or used.
+        var operations = Enumerable.Range(0, w.Operations.Count)
+            .Where(i => w.Operations.Attacker[i] == player || w.Operations.State[i] is (int)OperationState.Detected or (int)OperationState.Used)
+            .Select(i => new OperationView(
             w.Operations.Keys[i], w.Nations.Keys[w.Operations.Attacker[i]], ((OperationState)w.Operations.State[i]).ToString(),
             w.Operations.Access[i].ToDoubleForUi(), w.Operations.Attribution[i].ToDoubleForUi())).ToList();
 
@@ -158,14 +167,15 @@ public sealed record SimSnapshot(
                 ((Posture)w.Brigades.Posture[b]).ToString())).ToList(),
             fr.Detection[player].ToDoubleForUi(), fr.Detection[rival].ToDoubleForUi(),
             fr.DroneDensity[player].ToDoubleForUi(), fr.DroneDensity[rival].ToDoubleForUi(),
-            fr.KillZone[player].ToDoubleForUi(), fr.AdvanceKm[player].ToDoubleForUi(), fr.AdvanceKm[rival].ToDoubleForUi());
+            fr.KillZone[player].ToDoubleForUi(), fr.AdvanceKm[player].ToDoubleForUi(), fr.AdvanceKm[rival].ToDoubleForUi(),
+            p.Names[fr.Province]);
 
         return new SimSnapshot(
             sim.Day, sim.Hour, sim.Calendar.Describe(sim.Day), sim.IsCrisisDay,
             Core.StateHasher.Format(sim.StateHash()),
             provinces, goods, facilities, subs, services, designs,
-            politics, segments, factions, narratives, operations, front, w.Log.Entries,
-            DecisionView.Pending(sim), sim.IsFinished);
+            politics, segments, factions, narratives, operations, front, w.Log.Entries.ToList(),
+            DecisionView.Pending(sim), sim.IsFinished, player, w.Nations.Keys[player]);
     }
 
     public GoodView Good(string key) => Goods.First(g => g.Id == key);
@@ -174,7 +184,7 @@ public sealed record SimSnapshot(
 
 public sealed record ProvinceView(string Id, string Name, string Owner, bool InCrisis, double Corruption,
     double PowerServed, long PeopleWithoutPower, bool GridCollapsed,
-    int MapX, int MapY, int MapW, int MapH, int SubstationsDown, int Substations, bool InternetShutdown, long Population);
+    int MapX, int MapY, int MapW, int MapH, int SubstationsDown, int Substations, bool InternetShutdown, long Population, int Index);
 
 /// <summary>A good, nationally. DaysOfCover is null when nothing burns it. Shortage: 0 fine, 1 warning, 2 critical.</summary>
 public sealed record GoodView(string Id, string Name, string Unit, double Stock, double ProducedToday, double? DaysOfCover, int Shortage);
@@ -182,17 +192,20 @@ public sealed record GoodView(string Id, string Name, string Unit, double Stock,
 public sealed record FacilityView(string Id, string Name, string Province, string Recipe, string Output,
     double OutputToday, double NominalRun, double Efficiency, double PowerRatio, bool IsFab, double Yield, int RampDays, double WipScrapped);
 
-public sealed record SubstationView(string Id, string Province, bool Online, double CapacityFactor, string Repair, double RepairDaysLeft, bool MobileUnit);
+/// <summary>State is Online, Tripped or Damaged. Owner is the owning nation's key. Index is the id orders take.</summary>
+public sealed record SubstationView(string Id, string Province, bool Online, double CapacityFactor, string Repair, double RepairDaysLeft, bool MobileUnit,
+    string State, string Owner, int Index);
 
 public sealed record ServiceView(string Id, string Kind, string Province, double Powered, double FuelHours, double TankHours, double Availability);
 
-public sealed record DesignView(string Id, double Effectiveness, double Cap);
+public sealed record DesignView(string Id, double Effectiveness, double Cap, string Name, int Index);
 
 public sealed record PoliticsView(double PoliticalCapital, double Approval, double Trust, double WarSupport, double Rally,
     double WarExhaustion, double Legitimacy, double Inflation, bool Emergency, double Backsliding,
     int Mobilization, int MobilizationTarget, double ManpowerPool,
     double EscalationMeter, int Rung, double RivalRedLineEstimate, double InsuranceMultiplier, int ShippingLinesCalling, int ShippingLines,
-    double KilledInAction, IReadOnlyList<string> Precedents);
+    double KilledInAction, IReadOnlyList<string> Precedents,
+    int SpareTransformers, int MobileUnits, IReadOnlyList<int> ReservistsByLevel);
 
 /// <summary>Needs in the order of <see cref="Need"/>, smoothed.</summary>
 public sealed record SegmentView(string Id, string Name, long Population, double[] Needs, double Satisfaction, double Align, double Trust, double Unemployment);
@@ -207,4 +220,4 @@ public sealed record OperationView(string Id, string Attacker, string State, dou
 public sealed record BrigadeView(string Id, string Name, string Nation, double Strength, double Killed, string Posture);
 
 public sealed record FrontView(string Id, bool Active, bool Locked, IReadOnlyList<BrigadeView> Brigades, double PlayerDetection, double RivalDetection,
-    double PlayerDroneDensity, double RivalDroneDensity, double KillZoneKm, double PlayerAdvanceKm, double RivalAdvanceKm);
+    double PlayerDroneDensity, double RivalDroneDensity, double KillZoneKm, double PlayerAdvanceKm, double RivalAdvanceKm, string ProvinceName);

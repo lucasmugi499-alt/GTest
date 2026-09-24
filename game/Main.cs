@@ -33,12 +33,13 @@ public partial class Main : Control
         var args = ParseArgs(OS.GetCmdlineUserArgs());
         _c = new SimController();
         AddChild(_c);
+        // The sim starts first: panels build their controls from the first snapshot.
+        _c.Start(args.TryGetValue("seed", out var seed) ? ulong.Parse(seed, CultureInfo.InvariantCulture) : null);
         BuildUi();
         _c.Changed += Refresh;
         _c.Finished += OnFinished;
         _c.DecisionNeeded += _dialog.Open;
-
-        _c.Start(args.TryGetValue("seed", out var seed) ? ulong.Parse(seed, CultureInfo.InvariantCulture) : null);
+        _c.Announce();
         if (args.TryGetValue("auto", out var auto)) _c.Autopilot = Enum.Parse<AutoMode>(auto, ignoreCase: true);
         if (args.TryGetValue("screenshot", out var shot))
         {

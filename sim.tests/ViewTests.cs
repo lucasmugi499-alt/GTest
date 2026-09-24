@@ -43,4 +43,16 @@ public class ViewTests
         var col = view.Nodes.ToDictionary(n => n.Id, n => n.Column);
         Assert.All(view.Edges, e => Assert.True(col[e.From] < col[e.To], $"{e.From} → {e.To}"));
     }
+
+    [Fact]
+    public void SnapshotHidesTheRivalsUndetectedOperations()
+    {
+        // Fog of war: Varan's planted grid access is invisible until it is found or used (the forensic sweep's point).
+        var sim = TestContent.NewScenario();
+        var snap = SimSnapshot.Of(sim);
+        Assert.DoesNotContain(snap.Operations, o => o.Id == "varan_eastern_grid");
+        Assert.Contains(snap.Operations, o => o.Attacker == snap.PlayerKey);
+        sim.RunThrough(4); // the Day 4 attack uses it
+        Assert.Contains(SimSnapshot.Of(sim).Operations, o => o.Id == "varan_eastern_grid" && o.State == "Used");
+    }
 }
