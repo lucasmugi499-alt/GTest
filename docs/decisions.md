@@ -333,8 +333,60 @@ All of these are in `balance.yaml` under `society`.
   - It answers each crossing once, until the meter decays back below the red line.
   - A crossing is answered with the cheapest action whose floor reaches the next rung.
   - The reactive answer (weight ≤ e × r, 1 to 14 days later) is never an offensive.
-- **D-014 fallback:** the caught attempt is recorded as a detected intrusion (+4). The fallback disruption of the Interior substations is a disruptive cyber attack in its own right (+6).
+- **D-014 fallback:** the caught attempt is recorded as a detected intrusion (+4). The fallback disruption of the Interior substations reuses the grid disruption effect with no escalation of its own, exactly as asked. Counting it again (+6) pushed the defused path to rung 5 while the undefused path stayed at rung 4, which punished the player for defusing.
 - **Systems added outside the spec's lists:**
   - Weekly: war exhaustion (the spec gives it per week) and escalation decay.
   - Monthly: cyber access and detection, and the red-line estimate.
 - **Not simulated:** Varan's own politics (its war support is 50).
+
+## D-040 · The narrative engine
+
+- **Director phase timing:**
+  - The narrative phase (10) also runs hourly on crisis days, so arc beats land in the hour their event happens (the survey team at 11:00, lights out at 02:00, the deepfake at 06:00). The spec's "one major per 12 hours in Crisis Time" implies hourly firing.
+  - The Director's own generic picks happen once a day.
+- **Caps:**
+  - Arc beats ignore the caps (D-012), but they count in the weekly tallies that cap the Director's generic picks.
+  - A generic storylet fires only if its utility reaches 12.
+  - The Director samples a softmax over the top 3 with the Historian's temperature (5).
+- **Tension:** T = 0.3 K + 0.2 (100 − Approval) + 2.8 Rung + 0.3 A.
+  - K (crisis load) = the share of the player's provinces in Crisis Time, × 100.
+  - A (arc intensity) = 20 per arc beat in the last 14 days, up to 100.
+- **Utility:** U = w_T (T* − T) ι + w_P d/d* + w_D π ND − ρ n + b, with weights 1, 20, 0.5, 10 and 10 × the storylet's weight.
+  - n counts uses of the same storylet in the last 30 days.
+- **Seeds:**
+  - A seed's monthly payoff chance is applied daily as a hazard of p ÷ 30.
+  - Seeds are planted by choices. The Director doesn't plant its own seeds in the slice.
+  - Narrative Debt is the sum of live and ripe seed weights, up to 100.
+- **Casting:**
+  - fit = 50 for the role, + 30 for a matching portfolio, + 20 for province, + 20 for faction (up to 100).
+  - H (history) = 10 per memory the character holds.
+  - U (recent use) = 10 per appearance in the last 90 days.
+  - A character fills one role per storylet.
+- **Memory:**
+  - A memory of strength 50 or more (either way) is a grave act (τ = 730 days); others fade with τ = 90.
+  - Salience is 1 in the slice.
+- **Not built:**
+  - The fact-change index. Every storylet is re-checked every pass; with about 30 storylets that's cheap.
+  - Black swans. The Historian's 0.2% monthly chance has no black-swan storylets to draw on in the slice.
+- **Choice effects** carry out orders through the same order classes the player uses. A refused order is logged, not silently dropped.
+- **Majors** wait for the player. Minors wait in the Brief until they expire, when their default applies. With no player (`run`, batch), the autopilot answers.
+
+## D-041 · The Chronicle's verdict
+
+Five scores, each 0 to 100 (balance.yaml `chronicle`):
+
+| Score | Formula |
+| --- | --- |
+| Survival | 100 − 15 per rung above the start, − 30 if the rung reached conventional war |
+| Prosperity | 50 × (chips made ÷ Day 0 rate × days) + 50 × (the same for drones) |
+| Liberty | 100 − 2 × Backsliding − 8 per civil-liberties precedent use − 10 if an emergency is still in force |
+| Sovereignty | 50 × magnet cover ÷ 30 days (capped) + 50 × drone design effectiveness |
+| Humanity | 100 − 200 × the average share of people in the dark − 1 per death |
+
+- Each historian weights the five scores (`chronicle.yaml`).
+- A weighted score of 65 or more gets their high verdict, 45 or more their middle one, otherwise the low one.
+- The Declassified epilogue reveals:
+  - the rival's real red line, against your estimate
+  - who really ran each cyber attack, and how sure your analysts ended up
+  - whether a missed seed could have been defused
+  - every character's secrets

@@ -5,6 +5,7 @@ A near-future grand strategy game with deep simulation and a story engine on top
 - **Design:** [docs/concept.md](docs/concept.md) (the game concept) and [docs/spec.md](docs/spec.md) (the rules and formulas).
 - **Decisions:** [docs/decisions.md](docs/decisions.md). Where it disagrees with the spec, decisions.md wins.
 - **Parked ideas:** [docs/ideas.md](docs/ideas.md).
+- **Writing storylets:** [docs/storylets.md](docs/storylets.md) lists every fact and effect.
 
 ## Status
 
@@ -13,9 +14,9 @@ A near-future grand strategy game with deep simulation and a story engine on top
 | M0 Setup | Tools, folder layout, this README | Done |
 | M1 Sim core | Fixed-point math, RNG, scheduler, content loader, state hash | Done |
 | M2 Economy and grid | Production, stockpiles, transport, fab, grid, daily readout | Done |
-| M3 Society and conflict | Politics, information, cyber, military (light), escalation | Next |
-| M4 Narrative | Storylets, Director, Chronicle; playable as text | |
-| M5 Godot UI | Map, Cascade view, Brief, storylet dialog, readouts | |
+| M3 Society and conflict | Politics, information, cyber, military (light), escalation | Done |
+| M4 Narrative | Storylets, Director, Chronicle; playable as text | Done |
+| M5 Godot UI | Map, Cascade view, Brief, storylet dialog, readouts | Next |
 | M6 Balance | 1,000-seed batch runs and metrics | |
 
 ## What you need
@@ -48,19 +49,48 @@ dotnet build
 dotnet test
 ```
 
-**Run the sim in the terminal** (the headless runner). This plays Day 0 to Day 90 and prints one line per day: legacy chip output, drones built, Days of Cover for magnets and flight controllers, people without power, substations down, the hospital's generator fuel, and which provinces are in Crisis Time. The state hash appears every 30 days.
+**Play The Veyl Crossing in the terminal.** You make every decision by typing its number:
+
+```bash
+dotnet run --project tools -- play
+```
+
+- Major decisions stop the clock and wait for your answer. Minor ones wait in your Brief (`b`) and decide themselves if you ignore them.
+- Press Enter to move the clock on: an hour at a time in Crisis Time, otherwise a day. `d` jumps to the end of the day, `w` a week.
+- `o` opens the orders menu (repairs, priorities, mobilization, emergency powers, the information war and more). `s` shows full status, `h` lists the commands.
+- The Chronicle prints at the end.
+
+**Save a game and replay it exactly.** `--record` saves everything you type:
+
+```bash
+dotnet run --project tools -- play --record mygame.txt
+```
+
+Replay that file and the game plays out identically, down to the same final state hash:
+
+```bash
+dotnet run --project tools -- play < mygame.txt
+```
+
+**Let the autopilot play** (`first`, `default` or `random` choices):
+
+```bash
+dotnet run --project tools -- play --auto random
+```
+
+**Watch the world with no decisions at all.** This plays Day 0 to Day 90 and prints one line per day:
+- legacy chip output and drones built
+- Days of Cover for magnets and flight controllers
+- people without power, substations down, the hospital's generator fuel
+- Approval, Political Capital, trust and the escalation rung
+- how far the deepfake has spread
+- which provinces are in Crisis Time
 
 ```bash
 dotnet run --project tools -- run
 ```
 
-**Watch the Veyl cascade.** Until Varan's schedule arrives in M3, you can inject the shocks yourself: the Day 4 02:00 substation attack, repairs with whatever is in reserve, and Varan's Day 6 export controls:
-
-```bash
-dotnet run --project tools -- run --trip 4:2 --repair both --export-controls 6
-```
-
-Add `--verbose` for the grid, fab, backup generators and lowest stockpiles every day, and `--days 14` to stop early.
+To inject the Day 4 attack's damage and repairs into that no-decision run, add `--trip 4:2 --repair both --export-controls 6`. Add `--verbose` for grid, fab, society and front detail every day.
 
 **Check determinism yourself.** Run this twice: both runs must print the same hash. A different `--seed` gives a different hash.
 
@@ -94,7 +124,7 @@ Then press the ▶ Play button at the top right. At M0 you'll see a single line 
 | --- | --- |
 | `sim/` | **Cascade.Sim**, the simulation: a plain C# library with no Godot code in it |
 | `sim.tests/` | Automated tests (xUnit) for the sim |
-| `content/` | Game data as YAML: goods, recipes, facilities, characters, storylets, the scenario, and `balance.yaml` for every tunable number |
+| `content/` | Game data as YAML: goods, recipes, designs and `balance.yaml` (every tunable number); each scenario's world, society, conflict, characters, storylets and Chronicle voices are in `content/scenarios/<name>/` |
 | `tools/` | A console app that runs the sim without graphics: text play mode and batch runs |
 | `game/` | The Godot project. It only reads snapshots from the sim and sends orders to it; it never changes sim state directly. |
 | `docs/` | Design docs, decisions and ideas |
