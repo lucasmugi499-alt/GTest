@@ -75,11 +75,12 @@ public class SchedulerTests
         Assert.Equal(["d4h2:ev4/2"], log);
 
         sim.StepDay();
-        // Hourly phases (2, 5, 7, 8) ran 24 times each, before the daily pass.
+        // Hourly phases (2, 5, 7, 8, and the narrative) ran 24 times each, before the daily pass.
+        int traced = Simulation.HourlyPhases.Length - 2; // orders and events are the real built-ins, not traced
         var day4 = trace.Calls.Where(c => c.StartsWith("d4")).ToList();
-        Assert.Equal(24 * 4, day4.Count(c => c.StartsWith("d4h")));
+        Assert.Equal(24 * traced, day4.Count(c => c.StartsWith("d4h")));
         Assert.Equal("d4h0:2", day4[0]);
-        Assert.Equal("d4:2", day4[24 * 4]);
+        Assert.Equal("d4:2", day4[24 * traced]);
     }
 
     [Fact]

@@ -41,7 +41,7 @@ public class ConflictTests
         Assert.Equal(4, sim.Balance.Escalation.RungOf(Escalation.Meter(w, 0, 1)));
         Assert.Equal(3, Enumerable.Range(0, w.Substations.Count).Count(s => w.Substations.State[s] == (int)SubstationState.Damaged));
         Assert.True(w.Narratives.Active[w.Narratives.IdOf("president_fled")]);
-        int magnets = Enumerable.Range(0, w.Imports.Count).Single(r => w.Imports.Good[r] == Veyl.Good(sim, "rare_earth_magnet"));
+        int magnets = Enumerable.Range(0, w.Imports.Count).Single(r => w.Imports.Good[r] == Veyl.Good(sim, "rare_earth_magnet") && w.Imports.Source[r] >= 0);
         Assert.True(w.Imports.Blocked[magnets]);
         Assert.DoesNotContain(w.Log.Entries, e => e.Kind == "red_line");
         sim.RunThrough(20);

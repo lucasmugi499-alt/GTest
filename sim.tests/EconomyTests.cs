@@ -139,7 +139,7 @@ public class EconomyTests
         sim.Events.Schedule(new ExportControlEvent(6, sim.World.Nations.IdOf("varan"), [magnets, catalog.Good("gallium")], true));
         sim.RunThrough(6);
         var before = SimSnapshot.Of(sim).Good("rare_earth_magnet").DaysOfCover!.Value;
-        int route = Enumerable.Range(0, sim.World.Imports.Count).Single(r => sim.World.Imports.Good[r] == magnets);
+        int route = Enumerable.Range(0, sim.World.Imports.Count).Single(r => sim.World.Imports.Good[r] == magnets && sim.World.Imports.Source[r] >= 0);
         Assert.True(sim.World.Imports.Blocked[route]);
         Assert.Equal(Fixed.Zero, sim.World.Imports.ShippedToday[route]);
 
