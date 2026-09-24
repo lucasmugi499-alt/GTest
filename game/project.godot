@@ -10,6 +10,12 @@ config/name="Cascade"
 run/main_scene="res://Main.tscn"
 config/features=PackedStringArray("4.7", "C#", "GL Compatibility")
 
+[display]
+
+window/size/viewport_width=1600
+window/size/viewport_height=940
+window/stretch/mode="disabled"
+
 [dotnet]
 
 project/assembly_name="Cascade.Game"
