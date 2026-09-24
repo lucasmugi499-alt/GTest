@@ -240,7 +240,7 @@ public sealed class RecordPhase : IPhase
         var dark = Blackboard.PeopleDark(w, -1);
         d.PeopleDarkDays.Set(0, d.PeopleDarkDays[0] + Fixed.FromInt(dark));
         d.MaxRung.Set(0, Math.Max(d.MaxRung[0], Escalation.HighestRung(w, ctx.Balance, w.Nations.Player)));
-        if (ctx.CrisisProvinces.Count > 0) d.CrisisDays.Set(0, d.CrisisDays[0] + 1);
+        if (ctx.CrisisProvinces.Any(p => w.Provinces.Owner[p] == w.Nations.Player)) d.CrisisDays.Set(0, d.CrisisDays[0] + 1);
 
         var chips = Produced(ctx, ctx.Content.Scenario.Chronicle.ChipsGood);
         var drones = Produced(ctx, ctx.Content.Scenario.Chronicle.DronesGood);

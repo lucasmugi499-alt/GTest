@@ -242,7 +242,7 @@ static class Batch
         b.AppendLine($"1. The 2% cap assumes the spec's full library of thousands of storylets. With {library.Count} storylets, an even spread is already {P(1.0 / library.Count)} each, and the ten arc beats fire in nearly every campaign by design.");
         b.AppendLine("2. There is no GDP in the slice. The proxy is legacy chips plus drones (weighted ×1,000) on the last day against Day 0.");
         b.AppendLine("3. Three transformers are wrecked and Kestria holds two spares; a new one takes 730+ days. Only the lights_out choice that sends both spares to the homes (homes_first) relights 90% of the people, in 14 days. The other choices leave part of Ossen East on a 30% mobile unit for the rest of the slice, by design.");
-        b.AppendLine("4. The slice is the crisis itself: 91 days that open with an attack. The spec's 5–10% band is for a 20-year campaign, so it isn't comparable here.");
+        b.AppendLine("4. Counts days on which any Kestrian province is in Crisis Time. The spec's 5–10% band is for a 20-year campaign, so it isn't comparable with a 91-day slice that opens with an attack. It is high because the spec's rule keeps a province in Crisis Time while any substation runs below 70%: a wrecked substation on a 30% mobile unit (a new transformer takes 730+ days) holds Ossen East there for the rest of the slice.");
         b.AppendLine("5. The slice's ten arc beats land in the first 10 days by design (D-012). The Historian's 90-day rhythm governs everything after.");
         return b.ToString();
     }

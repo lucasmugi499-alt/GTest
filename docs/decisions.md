@@ -428,3 +428,37 @@ These changes were made after running 1,000 seeds with random choices.
   - With Cautious, random play reaches an offensive in 6.5% of campaigns. Forcing the Day 10 strike-back raises that to 24%.
   - To switch back, change one line: `personality:` in `conflict.yaml`.
 - **Blackout recovery metric:** a province counts as recovered when served demand is back to 90% of its pre-blackout level.
+
+## D-044 · Audit after M6
+
+A full review of the sim, content, tools and game. What changed:
+
+- **Double buffering.**
+  - The Director's daily pick used yesterday's Tension, Narrative Debt and last-major day. It now uses today's.
+  - Repair orders checked committed state, so two clicks in one phase could spend two spares on one substation.
+  - The `pc` fact read committed Political Capital, so a spend earlier in the same phase didn't count.
+  - All three now read pending values.
+- **Escalation.**
+  - A de-escalating effect (the back channel's −10) no longer blocks weekly decay.
+  - Falling below Varan's red line re-arms it at once.
+  - The forensic sweep no longer escalates by itself, so D-014's defused path costs +4 once, not twice.
+- **Fog of war.** The snapshot showed Varan's planted grid access from Day 0, which gave away the forensic sweep card. A rival's operation now shows only once it has been detected or used.
+- **The UI reads only snapshots.**
+  - The Orders panel and the controller no longer read sim state.
+  - The UI no longer hard-codes a province, a design index, "Veyl" or reservist numbers.
+- **Content, not code.**
+  - These moved from code to balance.yaml, and ids named there are checked at load:
+    - the rally threshold;
+    - the hourly rumor horizon;
+    - incident decay;
+    - the emergency and nationalization precedents.
+  - Emergency powers' effects on needs are summed from data, where they used to depend on a hard-coded curfew.
+  - The front's name and province names in log text now come from content.
+- **Rules.**
+  - A storylet's default choice may not have requirements.
+  - Seeds roll on their own RNG entity kind.
+  - Crisis days count only the player's provinces.
+- **Found, not changed (design calls):**
+  - Crisis Time stays on while any substation runs below 70%, so a province waiting on a new transformer stays in Crisis Time until Day 90 (the spec's rule taken literally).
+  - Efficiency grows on idle days (the spec's formula as written).
+  - Varan's front supply and drones are unconstrained (D-037).
