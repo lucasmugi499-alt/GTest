@@ -29,7 +29,21 @@ public sealed record ContentSet(string Root, Balance Balance, Catalog Catalog, S
         var scenarioDef = ScenarioDef.Read(sc, fac, grid, trade, society, conflict, characters, storylets, chronicle, catalog);
         foreach (var n in new[] { sc, fac, grid, trade, society, conflict, characters, storylets, chronicle }) n.EnsureAllUsed();
 
+        CrossCheck(balance, catalog, scenarioDef);
         return new ContentSet(contentDir, balance, catalog, scenarioDef);
+    }
+
+    /// <summary>Ids that balance.yaml names in the scenario must exist, so a typo fails at load, not mid-campaign.</summary>
+    private static void CrossCheck(Balance b, Catalog catalog, ScenarioDef s)
+    {
+        var so = s.Society;
+        so.Precedent(b.Society.EmergencyPrecedent);
+        so.Precedent(b.Society.NationalizationPrecedent);
+        so.Faction(b.Society.CivilLibertiesFaction);
+        catalog.Good(b.Grid.BackupFuelGood);
+        var pools = s.Provinces.SelectMany(p => p.Labour.Select(l => l.Pool)).Concat(s.Facilities.SelectMany(f => f.Labour.Select(l => l.Pool))).ToHashSet();
+        foreach (var pool in new[] { b.Grid.RepairCrewPool, b.Fab.EngineerPool })
+            if (!pools.Contains(pool)) throw new ContentException($"balance.yaml: labour pool '{pool}' isn't used by any province or facility.");
     }
 
     private static T ReadStrict<T>(string file, Func<ContentNode, T> read)

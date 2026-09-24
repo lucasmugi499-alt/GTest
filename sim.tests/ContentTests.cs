@@ -46,6 +46,16 @@ public class ContentTests : IDisposable
     [Fact]
     public void CopiedContentLoads() => ContentSet.Load(_dir);
 
+    [Theory]
+    [InlineData("emergency_precedent: emergency_declaration", "emergency_precedent: emergency_decree")]
+    [InlineData("civil_liberties_faction: civil_liberties", "civil_liberties_faction: liberals")]
+    [InlineData("repair_crew_pool: grid_linemen", "repair_crew_pool: linesmen")]
+    public void BalanceIdsMustExistInTheScenario(string from, string to)
+    {
+        Edit("balance.yaml", from, to);
+        Assert.Throws<ContentException>(() => ContentSet.Load(_dir));
+    }
+
     [Fact]
     public void MissingKeyIsAnError()
     {

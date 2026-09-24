@@ -115,6 +115,8 @@ society:
   water_kind: water
   health_kind: hospital
   civil_liberties_faction: civil_liberties   # the faction that reacts to civil-liberties precedents
+  emergency_precedent: emergency_declaration  # the precedent a declared emergency sets
+  nationalization_precedent: nationalization # the precedent a nationalization sets
   trust_recovery_per_day: 0.02    # D-034: Trust returns this share of the gap to its start each day
   political_capital_weekly_base: 2
   political_capital_per_approval_point: 0.1

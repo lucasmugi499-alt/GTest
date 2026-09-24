@@ -14,9 +14,9 @@ public sealed class DeclareEmergencyOrder(int issuer) : Order(issuer)
     {
         var p = ctx.World.Politics;
         if (p.EmergencyActive.Pending(Issuer)) return OrderOutcome.Refused("An emergency is already in force.");
-        var cost = Society.PrecedentCostPreview(ctx, Issuer, "emergency_declaration");
+        var cost = Society.PrecedentCostPreview(ctx, Issuer, ctx.Balance.Society.EmergencyPrecedent);
         if (!Society.TrySpend(ctx, Issuer, cost)) return OrderOutcome.Refused($"Needs {cost} Political Capital.");
-        Society.UsePrecedent(ctx, Issuer, "emergency_declaration");
+        Society.UsePrecedent(ctx, Issuer, ctx.Balance.Society.EmergencyPrecedent);
         p.EmergencyActive.Set(Issuer, true);
         p.EmergencySince.Set(Issuer, ctx.Day);
         ctx.World.Log.Add(ctx.Day, ctx.Hour, "emergency", $"{ctx.World.Nations.Names[Issuer]} declares a state of emergency.", ctx.World.Nations.Keys[Issuer]);
@@ -92,9 +92,9 @@ public sealed class NationalizeOrder(int issuer, string corporation) : Order(iss
         var w = ctx.World;
         int c = w.Corporations.IdOf(corporation);
         if (w.Corporations.Nationalized.Pending(c)) return OrderOutcome.Refused("Already a state asset.");
-        var cost = Society.PrecedentCostPreview(ctx, Issuer, "nationalization");
+        var cost = Society.PrecedentCostPreview(ctx, Issuer, ctx.Balance.Society.NationalizationPrecedent);
         if (!Society.TrySpend(ctx, Issuer, cost)) return OrderOutcome.Refused($"Needs {cost} Political Capital.");
-        Society.UsePrecedent(ctx, Issuer, "nationalization");
+        Society.UsePrecedent(ctx, Issuer, ctx.Balance.Society.NationalizationPrecedent);
         w.Corporations.Nationalized.Set(c, true);
         for (int o = 0; o < w.Corporations.Count; o++)
             if (o != c) w.Corporations.Loyalty.Set(o, Fixed.Max(Fixed.Zero, w.Corporations.Loyalty.Pending(o) - ctx.Balance.Society.NationalizationLoyaltyHit));
