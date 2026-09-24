@@ -1,0 +1,195 @@
+# The Cast for The Veyl Crossing (spec Data model: Character; concept The Cast).
+#   role        what storylet roles they can fill (minister, border_officer, journalist, ceo, citizen, engineer,
+#               faction_leader, head_of_state, envoy)
+#   portfolio   what they're responsible for; casting prefers a matching portfolio
+#   province    where they are; casting prefers a matching province ("none" if it doesn't matter)
+#   faction     faction they belong to, or none
+#   loyalties   to the player (the Office), their faction, the nation, and themselves, 0-100 (spec: 4 loyalties)
+#   drama       drama potential from conflicting loyalties, secrets and ambition, 0-100 (spec casting: Dr)
+- id: idris_marr
+  name: Captain Idris Marr
+  role: border_officer
+  portfolio: border
+  province: veyl
+  faction: none
+  competence: { security: 70 }
+  loyalties: { player: 60, faction: 0, nation: 85, self: 40 }
+  ambition: Command the Veyl Border Brigade.
+  secrets: []
+  drama: 55
+- id: rhea_castell
+  name: Defence Minister Rhea Castell
+  role: minister
+  portfolio: defence
+  province: kestria_interior
+  faction: security
+  competence: { security: 75, politics: 60 }
+  loyalties: { player: 50, faction: 70, nation: 70, self: 65 }
+  ambition: Become prime minister.
+  secrets: [Promised the Security Establishment a larger budget in return for its support.]
+  drama: 70
+- id: selin_okafor
+  name: Foreign Minister Selin Okafor
+  role: minister
+  portfolio: foreign
+  province: kestria_interior
+  faction: civil_liberties
+  competence: { diplomacy: 80 }
+  loyalties: { player: 65, faction: 50, nation: 70, self: 35 }
+  ambition: Broker the peace that ends the border dispute.
+  secrets: []
+  drama: 40
+- id: tomas_wren
+  name: Finance Minister Tomas Wren
+  role: minister
+  portfolio: finance
+  province: kestria_interior
+  faction: none
+  competence: { economy: 80 }
+  loyalties: { player: 60, faction: 0, nation: 60, self: 50 }
+  ambition: Keep Kestria's credit rating.
+  secrets: []
+  drama: 30
+- id: aurel_brandt
+  name: Deputy Trade Minister Aurel Brandt
+  role: minister
+  portfolio: trade
+  province: kestria_interior
+  faction: none
+  competence: { economy: 55 }
+  loyalties: { player: 45, faction: 0, nation: 40, self: 75 }
+  ambition: Keep his seat.
+  secrets: [Was warned a year ago that Tessera chips were reaching Varan through a front company, and did nothing.]
+  drama: 80
+- id: elena_marsh
+  name: President Elena Marsh
+  role: head_of_state
+  portfolio: state
+  province: kestria_interior
+  faction: none
+  competence: { politics: 70 }
+  loyalties: { player: 80, faction: 0, nation: 80, self: 40 }
+  ambition: Be remembered for keeping the country together.
+  secrets: []
+  drama: 20
+- id: mara_voss
+  name: Mara Voss
+  role: citizen
+  portfolio: health
+  province: kestria_east_ossen
+  faction: none
+  competence: { health: 75 }
+  loyalties: { player: 50, faction: 0, nation: 60, self: 50 }
+  ambition: Keep Ossen General running.
+  secrets: []
+  drama: 60
+- id: jonah_pell
+  name: Jonah Pell
+  role: citizen
+  portfolio: industry
+  province: kestria_east_ossen
+  faction: labour
+  competence: { industry: 60 }
+  loyalties: { player: 45, faction: 55, nation: 60, self: 55 }
+  ambition: Keep his job at Tessera; his brother is dug in at Veyl.
+  secrets: []
+  drama: 55
+- id: noor_haddad
+  name: Noor Haddad
+  role: journalist
+  portfolio: investigations
+  province: kestria_interior
+  faction: none
+  competence: { investigation: 85 }
+  loyalties: { player: 30, faction: 0, nation: 60, self: 75 }
+  ambition: Break the biggest story of the decade.
+  secrets: []
+  drama: 70
+- id: darius_kade
+  name: Darius Kade
+  role: ceo
+  portfolio: platform
+  province: kestria_interior
+  faction: none
+  competence: { business: 80 }
+  loyalties: { player: 30, faction: 0, nation: 35, self: 85 }
+  ambition: Keep Brightline's 22 million users in Varan.
+  secrets: [Brightline's Varani subsidiary takes moderation guidance from Varan's regulator.]
+  drama: 65
+- id: ilse_varda
+  name: Ilse Varda
+  role: ceo
+  portfolio: chips
+  province: kestria_east_ossen
+  faction: none
+  competence: { business: 75, industry: 70 }
+  loyalties: { player: 45, faction: 0, nation: 55, self: 70 }
+  ambition: Build Tessera's next fab, at home or abroad.
+  secrets: []
+  drama: 50
+- id: petra_solberg
+  name: Petra Solberg
+  role: engineer
+  portfolio: grid
+  province: kestria_east_ossen
+  faction: labour
+  competence: { grid: 85 }
+  loyalties: { player: 55, faction: 50, nation: 70, self: 35 }
+  ambition: Get the east's lights back on.
+  secrets: []
+  drama: 30
+- id: emil_sorensen
+  name: Dr Emil Sorensen
+  role: engineer
+  portfolio: design
+  province: kestria_interior
+  faction: none
+  competence: { design: 80 }
+  loyalties: { player: 60, faction: 0, nation: 65, self: 45 }
+  ambition: Run the Design Bureau.
+  secrets: []
+  drama: 25
+- id: viktor_rane
+  name: Viktor Rane
+  role: faction_leader
+  portfolio: nationalists
+  province: veyl
+  faction: nationalists
+  competence: { politics: 70 }
+  loyalties: { player: 20, faction: 85, nation: 70, self: 60 }
+  ambition: Bring the government down and take its place.
+  secrets: []
+  drama: 75
+- id: hana_okoro
+  name: Hana Okoro
+  role: faction_leader
+  portfolio: labour
+  province: kestria_east_ossen
+  faction: labour
+  competence: { politics: 65 }
+  loyalties: { player: 40, faction: 85, nation: 60, self: 40 }
+  ambition: A seat at the table for every decision that costs jobs.
+  secrets: []
+  drama: 45
+- id: lior_benet
+  name: Lior Benet MP
+  role: faction_leader
+  portfolio: civil_liberties
+  province: kestria_interior
+  faction: civil_liberties
+  competence: { law: 80 }
+  loyalties: { player: 40, faction: 80, nation: 65, self: 45 }
+  ambition: Put a sunset clause on every emergency power.
+  secrets: []
+  drama: 45
+- id: arkady_lenn
+  name: Envoy Arkady Lenn
+  role: envoy
+  portfolio: varan
+  province: varan_core
+  faction: none
+  competence: { diplomacy: 75 }
+  loyalties: { player: 10, faction: 0, nation: 90, self: 50 }
+  ambition: Win the border dispute without a war.
+  secrets: []
+  drama: 50

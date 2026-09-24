@@ -1,0 +1,799 @@
+# Storylets for The Veyl Crossing (spec Narrative engine; Storylet record).
+#
+#   arc            "veyl" for the scenario's beats: they fire when their preconditions hold and ignore the Director's
+#                  caps, but count toward pacing (D-012). Omit for generic storylets the Director chooses between.
+#   tier           major | minor. Majors pause the game for a decision; minors wait in the Brief until they expire.
+#   intensity      −1 calming … +1 escalating (the Director's ι)
+#   expires_days   days until the default choice applies on its own (omit: the decision waits for the player)
+#   preconditions  facts that must all hold (see docs/storylets.md for the fact list)
+#   roles          slots the Cast fills: role, and optionally portfolio / province / faction to match
+#   choices        text, a hint the player sees, requires (conditions to offer it), effects, memories (valence per role)
+#   seeds          seeds a choice plants (see "seeds" at the end)
+#   Text can use {role} for the cast character's name.
+
+storylets:
+
+  # ---------------------------------------------------------------- The Veyl arc (concept: Sample scenario 1)
+
+  - id: odd_logins
+    arc: veyl
+    tier: minor
+    weight: 1
+    intensity: 0.1
+    cooldown_days: 3650
+    expires_days: 2
+    default: ignore
+    title: "Odd logins at an eastern substation"
+    text: >
+      {engineer} flags a handful of odd logins on the control network at an Ossen substation, weeks old. Probably a
+      contractor's misconfigured laptop. A full forensic sweep would take the network team off other work.
+    preconditions: [ "day <= 2", "op.varan_eastern_grid.state == 0" ]
+    roles:
+      engineer: { role: engineer, portfolio: grid }
+    choices:
+      - id: sweep
+        text: "Order a forensic sweep of Ossen East's grid control systems."
+        hint: "15 Political Capital."
+        requires: [ "pc >= 15" ]
+        effects: { order.forensic_sweep: kestria_east_ossen }
+        memories: { engineer: 10 }
+      - id: ignore
+        text: "Note it and move on."
+        hint: "Most players do."
+        effects: {}
+
+  - id: wreck_at_veyl
+    arc: veyl
+    tier: major
+    weight: 1
+    intensity: 0.6
+    cooldown_days: 3650
+    title: "The wreck at Veyl"
+    text: >
+      A Varani surveillance drone has crashed on the Kestrian side of the Ossen. {finder} secured it before Varan could
+      ask for it back. {dove} urges discretion: the brine field survey talks resume next week.
+    preconditions: [ "rival.drone_ops_near_border >= 1", "rung in [1, 3]" ]
+    roles:
+      finder: { role: border_officer, province: veyl }
+      dove: { role: minister, portfolio: foreign }
+    choices:
+      - id: return_quietly
+        text: "Return it quietly."
+        hint: "De-escalates. The Nationalists will call you weak. You learn nothing."
+        effects: { escalation: -5, faction.nationalists: -8, flag.drone_returned: 1 }
+        memories: { finder: -20, dove: 10 }
+      - id: study_it
+        text: "Hold it and study it."
+        hint: "The Design Bureau learns Varan's jamming (+10% drone effectiveness). Varan protests formally."
+        effects: { design.fpv_strike_mk2: 0.1, escalation: 5, flag.wreck_studied: 1, flag.drone_held: 1, headline: "Kestria Holds Downed Varani Drone" }
+        memories: { finder: 15 }
+      - id: televise
+        text: "Put it on national television."
+        hint: "A short rally at home, but Varan must now respond in public."
+        effects: { rally: 6, escalation: 10, rival.must_respond: 5, flag.wreck_televised: 1, flag.drone_held: 1, headline: "Varani Spy Drone Paraded on Kestrian TV" }
+        memories: { finder: 10, dove: -15 }
+
+  - id: chips_in_wreck
+    arc: veyl
+    tier: major
+    weight: 1
+    intensity: 0.4
+    cooldown_days: 3650
+    title: "Chips in the wreck"
+    text: >
+      {engineer} reports from the Design Bureau: the drone's flight controller runs on Tessera legacy chips. Our chips,
+      from our fab, flying for Varan.
+    preconditions: [ "day >= 2", "flag.wreck_studied == 1" ]
+    roles:
+      engineer: { role: engineer, portfolio: design }
+    choices:
+      - id: investigate
+        text: "Investigate quietly how they got there."
+        hint: "5 Political Capital. Better to know before anyone else does."
+        requires: [ "pc >= 5" ]
+        effects: { pc: -5, flag.chips_investigated: 1 }
+        memories: { engineer: 10 }
+      - id: bury
+        text: "Bury the finding."
+        hint: "Nobody needs to know. Yet."
+        effects: { flag.chips_buried: 1, faction.security: 3 }
+        memories: { engineer: -25 }
+
+  - id: survey_team_clash
+    arc: veyl
+    tier: major
+    weight: 1
+    intensity: 0.9
+    cooldown_days: 3650
+    title: "The survey team"
+    text: >
+      Varan sent a "geological survey" into the brine field under armed escort. Shots were exchanged; two Kestrian border
+      guards are dead. {hawk} wants 40,000 reservists mobilized. {dove} wants allied mediation. {money} warns the bond
+      market is watching.
+    preconditions: [ "event.border_clash_deaths >= 1", "rung >= 4" ]
+    roles:
+      hawk: { role: minister, portfolio: defence }
+      dove: { role: minister, portfolio: foreign }
+      money: { role: minister, portfolio: finance }
+    choices:
+      - id: mobilize
+        text: "Mobilize 40,000 reservists (partial mobilization)."
+        hint: "Ready in 14 days. Military output ×1.8."
+        effects: { order.mobilize: 2, faction.security: 5, faction.nationalists: 5, faction.labour: -3, headline: "Kestria Calls Up 40,000 Reservists" }
+        memories: { hawk: 20, money: -10 }
+      - id: mobilize_exempt
+        text: "Mobilize, but exempt grid linemen and fab technicians."
+        hint: "10 Political Capital to push the exemptions through."
+        requires: [ "pc >= 10" ]
+        effects: { pc: -10, order.exempt: [grid_linemen, technicians], order.mobilize: 2, faction.security: 3, faction.nationalists: 3 }
+        memories: { hawk: 10 }
+      - id: mediation
+        text: "Ask allies to mediate."
+        hint: "Lowers the temperature. The Nationalists won't like it."
+        effects: { escalation: -3, legitimacy: 5, faction.nationalists: -5, faction.civil_liberties: 3 }
+        memories: { dove: 20, hawk: -15 }
+      - id: reassure
+        text: "Hold steady and reassure the markets."
+        hint: "Buys calm, and a little capital."
+        effects: { pc: 5, faction.nationalists: -3 }
+        memories: { money: 15, hawk: -10 }
+
+  - id: lights_out
+    arc: veyl
+    tier: major
+    weight: 1
+    intensity: 1
+    cooldown_days: 3650
+    title: "Lights out"
+    text: >
+      Three eastern substations have tripped and the transformers are wrecked. Four million people are in the dark. Cell
+      towers will die by dawn. At Ossen General, {nurse} counts the generator fuel. {engineer} needs to know where to send
+      the one spare transformer and the two mobile units.
+    preconditions: [ "province.kestria_east_ossen.subs_down >= 3" ]
+    roles:
+      nurse: { role: citizen, portfolio: health }
+      engineer: { role: engineer, portfolio: grid }
+    choices:
+      - id: homes_first
+        text: "Homes and the hospital first: mobile units to Ossen North and South, the spare to Ossen South."
+        hint: "People get power back first. The fab waits."
+        effects: { order.repair: [ { substation: ossen_north, method: mobile }, { substation: ossen_south, method: mobile }, { substation: ossen_south, method: spare } ] }
+        memories: { nurse: 20, engineer: 10 }
+      - id: fab_first
+        text: "The fab first: the spare to the industrial substation, mobile units to the homes."
+        hint: "Chips back in about three weeks after the repair. Homes wait longer."
+        effects: { order.repair: [ { substation: ossen_industrial, method: spare }, { substation: ossen_north, method: mobile }, { substation: ossen_south, method: mobile } ] }
+        memories: { nurse: -10, engineer: 5 }
+      - id: requisition
+        text: "Declare an emergency and requisition diesel for the generators."
+        hint: "30 Political Capital plus 10 for the requisition. Sets precedents. Tankers ×3."
+        requires: [ "pc >= 40" ]
+        effects: { order.declare_emergency: true, order.power: fuel_requisition, order.repair: [ { substation: ossen_south, method: mobile }, { substation: ossen_north, method: mobile } ] }
+        memories: { nurse: 15 }
+
+  - id: deepfake
+    arc: veyl
+    tier: major
+    weight: 1
+    intensity: 0.9
+    cooldown_days: 3650
+    title: "The deepfake"
+    text: >
+      06:30. A video shows {president} boarding a jet out of the capital. It is fake, and it is spreading fastest in the
+      dark east, where people can't check. {ceo} has 22 million users in Varan, and Varan wants the video left up.
+    preconditions: [ "narrative.president_fled.active == 1" ]
+    roles:
+      president: { role: head_of_state }
+      ceo: { role: ceo, portfolio: platform }
+    choices:
+      - id: takedown
+        text: "Lean on Brightline to take it down."
+        hint: "35 Political Capital of pressure. It works only if Brightline complies."
+        requires: [ "pc >= 35" ]
+        effects: { order.takedown: { narrative: president_fled, pressure: 35 } }
+        memories: { ceo: -20 }
+      - id: shutdown_east
+        text: "Declare an emergency and shut down the internet in Ossen East."
+        hint: "Stops the spread there, instantly. 50 Political Capital. Two precedents; Connectivity drops to zero."
+        requires: [ "pc >= 50" ]
+        effects: { order.declare_emergency: true, order.power: { power: internet_shutdown, province: kestria_east_ossen } }
+        memories: { ceo: 5, president: -5 }
+      - id: go_live
+        text: "Put the President live on television."
+        hint: "Triples how fast belief fades for a week. Only works while trust is above 50%."
+        effects: { order.counter: president_fled }
+        memories: { president: 15 }
+
+  - id: the_squeeze
+    arc: veyl
+    tier: major
+    weight: 1
+    intensity: 0.7
+    cooldown_days: 3650
+    title: "The squeeze"
+    text: >
+      Varan has announced an "export licensing review" on rare earth magnets and gallium. {money} reports war-risk
+      premiums up sharply on Kestrian ports, and container lines are thinking twice. The Cascade lens is lighting up.
+    preconditions: [ "import.rare_earth_magnet.controlled == 1" ]
+    roles:
+      money: { role: minister, portfolio: finance }
+      trade: { role: minister, portfolio: trade }
+    choices:
+      - id: other_suppliers
+        text: "Buy magnets from allied suppliers at any price."
+        hint: "A new route opens: 45 days to the first delivery, and much less of it."
+        effects: { order.open_import: { good: rare_earth_magnet, from: world }, pc: -5, headline: "Kestria Scrambles for Magnets" }
+        memories: { trade: 5 }
+      - id: military_first
+        text: "Magnets to the drone motor works first."
+        hint: "Drones keep flowing. Car and wind-turbine makers go short."
+        effects: { order.priority: { facility: kestria_motor_works, tier: critical }, faction.labour: -4, faction.security: 3 }
+        memories: { money: -5 }
+      - id: just_in_case
+        text: "Move to a Just-in-Case stockpile doctrine."
+        hint: "Every other import stocks up (90 days). Costs efficiency, and it can't bring back Varan's magnets."
+        effects: { order.doctrine: 1 }
+        memories: { money: -10 }
+
+  - id: story_breaks
+    arc: veyl
+    tier: major
+    weight: 1
+    intensity: 0.8
+    cooldown_days: 3650
+    title: "The story breaks"
+    text: >
+      {journalist} reports that Tessera chips reached Varan's drones through a front company abroad, and that {deputy}
+      was warned a year ago and did nothing. Civil Liberties and Labour demand an inquiry. The Nationalists demand that
+      Tessera be nationalized.
+    preconditions: [ "day >= 9", "flag.chips_buried == 0" ]
+    roles:
+      journalist: { role: journalist }
+      deputy: { role: minister, portfolio: trade }
+    choices:
+      - id: inquiry
+        text: "Open a public inquiry."
+        hint: "20 Political Capital. Civil Liberties and Labour approve."
+        requires: [ "pc >= 20" ]
+        effects: { pc: -20, faction.civil_liberties: 8, faction.labour: 5, align: 2, narrative.chips_scandal: { capital_professionals: 0.002 }, headline: "Inquiry Into Chips-to-Varan Pipeline" }
+        memories: { journalist: 15, deputy: -30 }
+      - id: fire_brandt
+        text: "Sack the Deputy Trade Minister."
+        hint: "A quick answer. It won't end the story."
+        effects: { faction.nationalists: 3, faction.civil_liberties: 2, narrative.chips_scandal: { capital_professionals: 0.004, ossen_workers: 0.004 }, flag.brandt_fired: 1 }
+        memories: { deputy: -70 }
+      - id: nationalize
+        text: "Nationalize Tessera."
+        hint: "60 Political Capital. Sets a precedent. The Nationalists cheer; investors flee."
+        requires: [ "pc >= 60" ]
+        effects: { order.nationalize: corp_tessera, faction.nationalists: 8, faction.civil_liberties: -5, narrative.chips_scandal: { capital_professionals: 0.003 }, headline: "Tessera Nationalized" }
+        memories: { journalist: 5 }
+
+  - id: story_breaks_coverup
+    arc: veyl
+    tier: major
+    weight: 1
+    intensity: 1
+    cooldown_days: 3650
+    title: "The story breaks, and it's a cover-up"
+    text: >
+      {journalist} reports that Tessera chips reached Varan's drones through a front company abroad, that {deputy} was
+      warned a year ago, and that the government's own engineers found the chips in the Veyl wreck and were told to stay
+      quiet. It is no longer a story about a front company.
+    preconditions: [ "day >= 9", "flag.chips_buried == 1" ]
+    roles:
+      journalist: { role: journalist }
+      deputy: { role: minister, portfolio: trade }
+    choices:
+      - id: confess
+        text: "Admit it and open an inquiry."
+        hint: "30 Political Capital. Trust falls, but less than if you deny it."
+        requires: [ "pc >= 30" ]
+        effects: { pc: -30, trust: -5, faction.civil_liberties: 3, narrative.chips_scandal: { capital_professionals: 0.01, ossen_workers: 0.01 }, headline: "Government Admits Hiding Chips Finding" }
+        memories: { journalist: 10, deputy: -40 }
+      - id: deny
+        text: "Deny everything."
+        hint: "If it's proven, it gets much worse."
+        effects: { trust: -10, faction.civil_liberties: -10, faction.labour: -6, narrative.chips_scandal: { capital_professionals: 0.03, ossen_workers: 0.03, ossen_families: 0.02 }, headline: "Cover-Up Row Engulfs Government" }
+        memories: { journalist: -40 }
+
+  - id: day10_decision
+    arc: veyl
+    tier: major
+    weight: 1
+    intensity: 1
+    cooldown_days: 3650
+    title: "Power, chips or people"
+    text: >
+      Ten days in. The east is still dark, the fab is scrapped and silent, flight controllers are running out, and Varan
+      holds the magnets. {hawk}, {dove} and {money} have each made their case. There is no clean answer.
+    preconditions: [ "day >= 10" ]
+    roles:
+      hawk: { role: minister, portfolio: defence }
+      dove: { role: minister, portfolio: foreign }
+      money: { role: minister, portfolio: finance }
+    choices:
+      - id: lights_first
+        text: "A. Lights first: power to homes, hospitals and water; the fab stays dark."
+        hint: "Public mood recovers. Drone output collapses in three weeks."
+        effects: { order.priority: [ { facility: tessera_fab_3, tier: low }, { load: ossen_north_homes, tier: high }, { load: ossen_south_homes, tier: high } ], align: 4, faction.labour: 4, faction.security: -6, headline: "Kestria Keeps the Lights On, Loses the Sky" }
+        memories: { dove: 10, hawk: -15 }
+      - id: fab_first
+        text: "B. Fab first: divert power to restart Tessera; rolling blackouts in the cities."
+        hint: "Drones recover in five weeks. Varan will say you chose weapons over people."
+        effects: { order.priority: [ { facility: tessera_fab_3, tier: critical }, { facility: ardent_controller_plant, tier: critical } ], faction.labour: -6, align: -3, narrative.weapons_over_warmth: { ossen_families: 0.004, ossen_workers: 0.003 }, headline: "The Weapons-or-Warmth Winter" }
+        seeds: [ mara_protest ]
+        memories: { hawk: 15, dove: -5 }
+      - id: emergency
+        text: "C. Emergency powers: requisition diesel, nationalize Tessera, take Brightline dark in the east."
+        hint: "Fastest recovery on paper. Three precedents. Investors flee."
+        requires: [ "pc >= 60" ]
+        effects: { order.declare_emergency: true, order.power: [ fuel_requisition, { power: internet_shutdown, province: kestria_east_ossen } ], order.nationalize: corp_tessera, order.priority: { facility: tessera_fab_3, tier: critical }, faction.civil_liberties: -10, headline: "The Emergency That Never Ended?" }
+        seeds: [ emergency_never_ends ]
+        memories: { hawk: 10, dove: -20 }
+      - id: strike_back
+        text: "D. Strike back: burn our access in Varan's dam control network."
+        hint: "Leverage for talks. Attribution risk is high; allies step back."
+        requires: [ "op.kestria_ossen_dam.state == 0" ]
+        effects: { order.launch_cyber: kestria_ossen_dam, legitimacy: -10, faction.nationalists: 6, headline: "Kestria Answers in Kind" }
+        seeds: [ allies_step_back ]
+        memories: { hawk: 20, dove: -25 }
+      - id: back_channel
+        text: "E. Back channel: return the drone and offer a joint survey if the export review ends."
+        hint: "De-escalation. The Nationalists call a no-confidence vote."
+        effects: { escalation: -10, rival.lift_export_controls: 7, faction.nationalists: -15, flag.drone_returned: 1, headline: "Peace, at a Price" }
+        seeds: [ no_confidence ]
+        memories: { dove: 25, hawk: -20 }
+
+  # ---------------------------------------------------------------- Seed payoffs (arc aftermath)
+
+  - id: mara_leads_protest
+    tier: major
+    weight: 1
+    intensity: 0.8
+    cooldown_days: 3650
+    title: "The nurse on the steps"
+    text: >
+      {nurse} stands on the steps of Ossen General in front of the cameras: "They kept the fab lit while we ran the ICU on
+      diesel." Thousands march in the east.
+    preconditions: [ "seed.mara_protest.ripe == 1" ]
+    roles:
+      nurse: { role: citizen, portfolio: health }
+    choices:
+      - id: meet_her
+        text: "Meet her, publicly."
+        hint: "Humbling. It helps."
+        effects: { align: 3, faction.labour: 4, headline: "Nurse Who Defied the Government Meets the Office" }
+        memories: { nurse: 30 }
+      - id: ignore_her
+        text: "Let it burn out."
+        hint: "It may not."
+        effects: { align: -3, faction.labour: -5 }
+        memories: { nurse: -40 }
+
+  - id: no_confidence_vote
+    tier: major
+    weight: 1
+    intensity: 0.9
+    cooldown_days: 3650
+    title: "No confidence"
+    text: >
+      {leader} tables a motion of no confidence: "They gave back a spy drone for a promise." The vote is Thursday.
+    preconditions: [ "seed.no_confidence.ripe == 1" ]
+    roles:
+      leader: { role: faction_leader, faction: nationalists }
+    choices:
+      - id: whip
+        text: "Whip every vote you have."
+        hint: "40 Political Capital. You survive."
+        requires: [ "pc >= 40" ]
+        effects: { pc: -40, faction.nationalists: -5, headline: "Government Survives No-Confidence Vote" }
+        memories: { leader: -10 }
+      - id: concede
+        text: "Concede a harder line on Varan."
+        hint: "The Nationalists relent; escalation rises."
+        effects: { escalation: 6, faction.nationalists: 10 }
+        memories: { leader: 10 }
+
+  - id: emergency_anniversary
+    tier: major
+    weight: 1
+    intensity: 0.5
+    cooldown_days: 3650
+    title: "The emergency that never ended"
+    text: >
+      {mp} counts the days: the emergency powers are still in force and nobody has said when they end.
+    preconditions: [ "seed.emergency_never_ends.ripe == 1", "emergency == 1" ]
+    roles:
+      mp: { role: faction_leader, faction: civil_liberties }
+    choices:
+      - id: sunset
+        text: "Announce the end of the emergency."
+        hint: "10 Political Capital per month it lasted."
+        effects: { order.end_emergency: true, faction.civil_liberties: 8 }
+        memories: { mp: 25 }
+      - id: extend
+        text: "Extend it. The crisis isn't over."
+        hint: "The Security Establishment approves."
+        effects: { faction.civil_liberties: -10, faction.security: 5 }
+        memories: { mp: -30 }
+
+  - id: allies_step_back
+    tier: major
+    weight: 1
+    intensity: 0.6
+    cooldown_days: 3650
+    title: "Allies step back"
+    text: >
+      The attribution report is out: most capitals believe Kestria hit Varan's dam network. {dove} says three allies have
+      quietly shelved the joint exercise.
+    preconditions: [ "seed.allies_step_back.ripe == 1" ]
+    roles:
+      dove: { role: minister, portfolio: foreign }
+    choices:
+      - id: own_it
+        text: "Own it: it was an answer to the blackout."
+        hint: "Honest. Costly abroad."
+        effects: { legitimacy: -5, faction.nationalists: 4 }
+        memories: { dove: -10 }
+      - id: deny_it
+        text: "Deny it."
+        hint: "Buys time."
+        effects: { trust: -3 }
+        memories: { dove: -5 }
+
+  # ---------------------------------------------------------------- Generic minor storylets (the Director's pool)
+
+  - id: generator_fuel
+    tier: minor
+    weight: 1
+    intensity: 0.6
+    cooldown_days: 20
+    expires_days: 2
+    default: wait
+    title: "Generator fuel"
+    text: >
+      {nurse} at Ossen General: the generators have less than a day of diesel left.
+    preconditions: [ "service.ossen_general.fuel_hours < 24", "service.ossen_general.fuel_hours > 0" ]
+    roles:
+      nurse: { role: citizen, portfolio: health }
+    choices:
+      - id: hospital_first
+        text: "Put the hospital at the top of the fuel list."
+        hint: "Water pumps and cell towers wait."
+        effects: { order.priority: [ { load: ossen_general, tier: critical }, { load: ossen_north_water, tier: high }, { load: ossen_south_water, tier: high } ] }
+        memories: { nurse: 20 }
+      - id: wait
+        text: "The trucks are coming."
+        hint: "Are they?"
+        effects: {}
+        memories: { nurse: -10 }
+
+  - id: laid_off
+    tier: minor
+    weight: 1
+    intensity: 0.3
+    cooldown_days: 60
+    expires_days: 3
+    default: nothing
+    title: "Laid off"
+    text: >
+      Tessera has sent {worker} and three hundred other technicians home from the idle fab. His brother is dug in at Veyl.
+    preconditions: [ "facility.tessera_fab_3.power < 0.5", "day >= 6" ]
+    roles:
+      worker: { role: citizen, portfolio: industry }
+    choices:
+      - id: wage_support
+        text: "Fund wage support for idled fab workers."
+        hint: "10 Political Capital."
+        requires: [ "pc >= 10" ]
+        effects: { pc: -10, faction.labour: 5, align: 1 }
+        memories: { worker: 25 }
+      - id: nothing
+        text: "The fab will reopen."
+        hint: "Labour is watching."
+        effects: { faction.labour: -3 }
+        memories: { worker: -15 }
+
+  - id: linemen_called_up
+    tier: minor
+    weight: 1
+    intensity: -0.2
+    cooldown_days: 30
+    expires_days: 3
+    default: refuse
+    title: "The linemen are gone"
+    text: >
+      {engineer}: "Half my linemen got call-up papers. Repairs are crawling. Exempt them, or accept the dark lasts longer."
+    preconditions: [ "mobilization >= 2", "province.kestria_east_ossen.subs_down >= 1" ]
+    roles:
+      engineer: { role: engineer, portfolio: grid }
+    choices:
+      - id: exempt
+        text: "Exempt grid linemen from call-up."
+        hint: "They come home. The reserve brigade is smaller."
+        effects: { order.exempt: [grid_linemen] }
+        memories: { engineer: 20 }
+      - id: refuse
+        text: "The front needs them too."
+        hint: ""
+        effects: { faction.security: 2 }
+        memories: { engineer: -20 }
+
+  - id: bond_jitters
+    tier: minor
+    weight: 1
+    intensity: 0.2
+    cooldown_days: 30
+    expires_days: 3
+    default: ignore
+    title: "Bond market jitters"
+    text: >
+      {money}: "Our bonds are pricing in a war. A clear statement would help."
+    preconditions: [ "rung >= 4" ]
+    roles:
+      money: { role: minister, portfolio: finance }
+    choices:
+      - id: reassure
+        text: "Reassure the markets."
+        hint: "5 Political Capital."
+        requires: [ "pc >= 5" ]
+        effects: { pc: -5, trust: 2 }
+        memories: { money: 10 }
+      - id: ignore
+        text: "Markets aren't the priority."
+        hint: ""
+        effects: {}
+        memories: { money: -5 }
+
+  - id: nationalist_rally
+    tier: minor
+    weight: 1
+    intensity: 0.4
+    cooldown_days: 30
+    expires_days: 3
+    default: ignore
+    title: "A rally in Veyl"
+    text: >
+      {leader} fills the square in Veyl: "The border guards died and the government sends notes."
+    preconditions: [ "faction.nationalists.approval < 40" ]
+    roles:
+      leader: { role: faction_leader, faction: nationalists }
+    choices:
+      - id: meet
+        text: "Invite him to the Office."
+        hint: "The Nationalists soften; Civil Liberties frown."
+        effects: { faction.nationalists: 5, faction.civil_liberties: -3 }
+        memories: { leader: 15 }
+      - id: ignore
+        text: "Ignore it."
+        hint: ""
+        effects: { faction.nationalists: -2 }
+        memories: { leader: -10 }
+
+  - id: sunset_petition
+    tier: minor
+    weight: 1
+    intensity: -0.3
+    cooldown_days: 30
+    expires_days: 5
+    default: dismiss
+    title: "A sunset clause"
+    text: >
+      {mp} presents a petition with 400,000 signatures: every emergency power should expire after 60 days.
+    preconditions: [ "emergency == 1" ]
+    roles:
+      mp: { role: faction_leader, faction: civil_liberties }
+    choices:
+      - id: accept
+        text: "Accept the sunset clause."
+        hint: "Civil Liberties approve."
+        effects: { faction.civil_liberties: 8, faction.security: -3, flag.sunset_clause: 1 }
+        memories: { mp: 20 }
+      - id: dismiss
+        text: "Dismiss it."
+        hint: ""
+        effects: { faction.civil_liberties: -5 }
+        memories: { mp: -15 }
+
+  - id: shipping_guarantee
+    tier: minor
+    weight: 1
+    intensity: -0.2
+    cooldown_days: 30
+    expires_days: 3
+    default: decline
+    title: "The shipping lines"
+    text: >
+      Harrow Maritime asks for a state war-risk guarantee. Without it, more lines will skip Kestrian ports.
+    preconditions: [ "lines_calling < 5" ]
+    roles:
+      money: { role: minister, portfolio: finance }
+    choices:
+      - id: guarantee
+        text: "Guarantee war-risk cover for ships calling at Kestrian ports."
+        hint: "15 Political Capital. Every line calls again."
+        requires: [ "pc >= 15" ]
+        effects: { pc: -15, flag.insurance_guarantee: 1 }
+        memories: { money: -5 }
+      - id: decline
+        text: "Decline."
+        hint: ""
+        effects: {}
+
+  - id: hacker_claim
+    tier: minor
+    weight: 1
+    intensity: 0.3
+    cooldown_days: 3650
+    expires_days: 3
+    default: quiet
+    title: "Someone claims the blackout"
+    text: >
+      A hacker collective calling itself Ossen Dawn claims credit for the blackout. Our intelligence thinks it's a front
+      for Varan's cyber command, but can't prove it yet.
+    preconditions: [ "op.varan_eastern_grid.state == 1", "day >= 5" ]
+    roles:
+      dove: { role: minister, portfolio: foreign }
+    choices:
+      - id: publish
+        text: "Publish our evidence against Varan."
+        hint: "Legitimacy rises abroad. Varan will call it an influence campaign."
+        effects: { legitimacy: 5, escalation: 3 }
+        memories: { dove: -5 }
+      - id: quiet
+        text: "Stay quiet until we're sure."
+        hint: ""
+        effects: {}
+        memories: { dove: 5 }
+
+  - id: towers_dark
+    tier: minor
+    weight: 1
+    intensity: 0.3
+    cooldown_days: 20
+    expires_days: 2
+    default: wait
+    title: "No signal"
+    text: >
+      Cell towers across the east have been dark for days. {engineer} can borrow army signal units, but the Veyl front
+      needs them.
+    preconditions: [ "service.ossen_north_cells.availability < 0.5", "day >= 5" ]
+    roles:
+      engineer: { role: engineer, portfolio: grid }
+    choices:
+      - id: army_signals
+        text: "Lend the army's signal units to the towers."
+        hint: "Cell towers go to the top of the fuel list."
+        effects: { order.priority: [ { load: ossen_north_cells, tier: critical }, { load: ossen_south_cells, tier: critical } ], faction.security: -2 }
+        memories: { engineer: 10 }
+      - id: wait
+        text: "The front comes first."
+        hint: ""
+        effects: {}
+
+  - id: magnet_hoarding
+    tier: minor
+    weight: 1
+    intensity: 0.2
+    cooldown_days: 30
+    expires_days: 3
+    default: market
+    title: "Magnet hoarding"
+    text: >
+      {money}: carmakers and turbine firms are hoarding magnets. Prices have tripled.
+    preconditions: [ "doc.rare_earth_magnet < 25" ]
+    roles:
+      money: { role: minister, portfolio: finance }
+    choices:
+      - id: allocate
+        text: "Allocate magnets: civil industry drops down the list."
+        hint: "Drone motors keep going."
+        effects: { order.priority_demand: { good: rare_earth_magnet, tier: low }, faction.labour: -2 }
+        memories: { money: -5 }
+      - id: market
+        text: "Let the market sort it out."
+        hint: ""
+        effects: {}
+
+  - id: border_town_fear
+    tier: minor
+    weight: 1
+    intensity: -0.3
+    cooldown_days: 30
+    expires_days: 3
+    default: stay
+    title: "Veyl is afraid"
+    text: >
+      {officer} reports families leaving Veyl for the Interior. The border town is emptying.
+    preconditions: [ "rung >= 4", "day >= 5" ]
+    roles:
+      officer: { role: border_officer, province: veyl }
+    choices:
+      - id: reassure
+        text: "Visit Veyl and promise protection."
+        hint: "5 Political Capital."
+        requires: [ "pc >= 5" ]
+        effects: { pc: -5, faction.nationalists: 3, trust: 1 }
+        memories: { officer: 15 }
+      - id: stay
+        text: "Let people decide for themselves."
+        hint: ""
+        effects: {}
+
+  - id: design_bureau_patch
+    tier: minor
+    weight: 1
+    intensity: -0.2
+    cooldown_days: 21
+    expires_days: 4
+    default: later
+    title: "A firmware patch"
+    text: >
+      {engineer}: Varan's jammers are getting better. A firmware patch would win back some effectiveness in five days.
+    preconditions: [ "design.fpv_strike_mk2.effectiveness < 0.8" ]
+    roles:
+      engineer: { role: engineer, portfolio: design }
+    choices:
+      - id: patch
+        text: "Push the patch."
+        hint: "+0.10 effectiveness, up to the design's cap."
+        effects: { order.firmware: fpv_strike_mk2 }
+        memories: { engineer: 10 }
+      - id: later
+        text: "Not now."
+        hint: ""
+        effects: {}
+
+  - id: minister_resigns
+    tier: minor
+    weight: 1
+    intensity: 0.5
+    cooldown_days: 60
+    expires_days: 1
+    default: accept
+    title: "A resignation"
+    text: >
+      {minister} has had enough, and wants it known.
+    preconditions: [ "cast_opinion_min.minister < -40" ]
+    roles:
+      minister: { role: minister, opinion_below: -40 }
+    choices:
+      - id: accept
+        text: "Accept the resignation."
+        hint: ""
+        effects: { align: -2 }
+        memories: { minister: -10 }
+
+  - id: journalist_digs
+    tier: minor
+    weight: 1
+    intensity: 0.2
+    cooldown_days: 30
+    expires_days: 3
+    default: decline
+    title: "Questions"
+    text: >
+      {journalist} wants an interview about the blackout response.
+    preconditions: [ "province.kestria_east_ossen.dark > 1000000", "day >= 8" ]
+    roles:
+      journalist: { role: journalist }
+    choices:
+      - id: interview
+        text: "Give the interview."
+        hint: "Straight answers help trust, if people are listening."
+        effects: { trust: 2 }
+        memories: { journalist: 10 }
+      - id: decline
+        text: "Decline."
+        hint: ""
+        effects: {}
+        memories: { journalist: -5 }
+
+# Seeds (spec Seeds and Narrative Debt): after the minimum delay, a payoff chance each month (applied daily, D-040);
+# defused if every defuse condition holds.
+seeds:
+  - { id: mara_protest,        weight: 20, min_delay_days: 30, monthly_chance: 0.3,  defuse: [ "province.kestria_east_ossen.dark == 0" ] }
+  - { id: no_confidence,       weight: 25, min_delay_days: 30, monthly_chance: 0.3,  defuse: [ "faction.nationalists.approval >= 75" ] }
+  - { id: emergency_never_ends, weight: 20, min_delay_days: 30, monthly_chance: 0.2, defuse: [ "emergency == 0" ] }
+  - { id: allies_step_back,    weight: 20, min_delay_days: 30, monthly_chance: 0.3,  defuse: [] }

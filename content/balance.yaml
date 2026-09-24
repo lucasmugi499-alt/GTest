@@ -129,7 +129,7 @@ society:
   strike_labour_cut: 0.2          # D-035: a strike idles 20% of member provinces' workers for a week
   strike_days: 7
   protest_incidents: 5            # D-035: incidents per 100,000 a protest adds to its member segments
-  agenda_rung: 10                 # D-035: agenda terms, points per unit
+  agenda_rung: 5                  # D-035: agenda terms, points per unit
   agenda_mobilization: 15
   agenda_emergency: 30
   agenda_civil_precedent: 10
@@ -270,3 +270,54 @@ markets:
   insurance_from_rung: 2
   insurance_skip_from_multiplier: 4
   insurance_skip_chance: 0.2
+  guarantee_flag: insurance_guarantee   # while this storylet flag is set, the state covers war risk and no line skips
+
+# Spec Narrative engine: Director scoring, casting, character memory.
+narrative:
+  memory_grave_days: 730           # τ for grave acts
+  memory_minor_days: 90            # τ for minor ones
+  memory_grave_valence: 50         # D-040: a memory at least this strong (either way) counts as a grave act
+  casting_fit_role: 50             # D-040: fit = 50 for the right role, +30 portfolio, +20 province, +20 faction (max 100)
+  casting_fit_portfolio: 30
+  casting_fit_province: 20
+  casting_fit_faction: 20
+  casting_history: 0.5             # score = fit + 0.5 H + 0.3 Dr − 0.5 U
+  casting_drama: 0.3
+  casting_recent: 0.5
+  casting_recent_per_appearance: 10
+  casting_recent_window_days: 90
+  history_per_memory: 10           # D-040: H = 10 per memory the character holds, up to 100
+  tension_crisis: 0.3              # T = 0.3 K + 0.2 (100 − Appr) + 2.8 Rung + 0.3 A
+  tension_approval: 0.2
+  tension_rung: 2.8
+  tension_arcs: 0.3
+  arc_intensity_per_beat: 20       # D-040: A = 20 per arc beat in the last 14 days, up to 100
+  arc_intensity_window_days: 14
+  director: historian
+  directors:
+    historian: { target_tension: 35, major_every_days: 90, black_swan_per_month: 0.002, temperature: 5 }
+  utility_tension: 1               # D-040: U = w_T (T* − T) ι + w_P d/d* + w_D π ND − ρ n + b
+  utility_pacing: 20
+  utility_debt: 0.5
+  utility_repeat: 10
+  utility_base: 10
+  utility_min: 12                  # D-040: a generic storylet fires only if its utility reaches this
+  repeat_window_days: 30
+  top_choices: 3
+  majors_per_week: 1
+  minors_per_week: 3
+  crisis_major_hours: 12
+
+# The Chronicle's verdict scores, 0-100 each (D-041).
+chronicle:
+  survival_per_rung: 15            # −15 per rung above the start
+  survival_war_penalty: 30         # −30 if the rung reached conventional war (5)
+  war_rung: 5
+  liberty_per_backsliding: 2
+  liberty_per_civil_precedent_use: 8
+  liberty_emergency_in_force: 10
+  sovereignty_cover_days: 30       # magnet cover at which the magnet half scores full
+  humanity_blackout_weight: 200    # −200 × average share of people in the dark
+  humanity_per_death: 1
+  band_high: 65                    # verdict bands on the historian's weighted score
+  band_low: 45

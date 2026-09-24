@@ -110,6 +110,15 @@ narratives:
     align_hit: 20
     trust_hit: 8
     established: { civil_liberties: -5, labour: -4, nationalists: -3 }
+  - id: weapons_over_warmth
+    name: "Varan line: Kestria chose weapons over warmth"
+    origin: varan
+    virality: 20
+    plausibility: 0.7
+    resonance: { eastern: 1.4, industrial: 1.0, border: 1.0, rural: 1.0, heartland: 1.0, urban: 0.9, tech: 0.8, coastal: 1.0, older: 1.1 }
+    align_hit: 20
+    trust_hit: 6
+    established: { labour: -5, civil_liberties: -3 }
 
 # Precedents (spec Precedents: the n-th use costs base × 0.6^(n-1); from the 4th use the precedent is normalized).
 #   political_capital   base PC cost of the act

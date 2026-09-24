@@ -1,0 +1,29 @@
+# The Chronicle and History's Verdict (concept: three historians judge the campaign on Survival, Prosperity, Liberty,
+# Sovereignty and Humanity). Score formulas are in balance.yaml (chronicle); the voices are here.
+chips_good: legacy_chip
+drones_good: fpv_strike_drone
+magnets_good: rare_earth_magnet
+drone_design: fpv_strike_mk2
+
+historians:
+  - id: korr
+    name: Professor Anneliese Korr
+    school: economic historian
+    weights: { survival: 0.2, prosperity: 0.4, liberty: 0.1, sovereignty: 0.25, humanity: 0.05 }
+    high: "The Office treated the grid and the fab as the country's spine, and the spine held. Whatever else is said of those ninety days, the machine kept running."
+    mid: "A mixed ledger: the Office bought time with stockpiles it had not built, and paid for it in output the country will not recover this year."
+    low: "Ninety days in which Kestria discovered how little of its own economy it controlled, and did too little about it."
+  - id: adeyemi
+    name: Dr Tobi Adeyemi
+    school: social historian
+    weights: { survival: 0.15, prosperity: 0.1, liberty: 0.35, sovereignty: 0.05, humanity: 0.35 }
+    high: "In the dark east, the state kept faith with its people: the hospital stayed lit, and the emergency did not become a habit."
+    mid: "The government kept most of its promises to the east, and broke a few it will be reminded of."
+    low: "History will remember who went without power, and who decided they should."
+  - id: strand
+    name: General (ret.) Magnus Strand
+    school: military historian
+    weights: { survival: 0.4, prosperity: 0.1, liberty: 0.05, sovereignty: 0.35, humanity: 0.1 }
+    high: "Varan tested Kestria across every layer at once and found no seam wide enough to exploit. Deterrence, in the end, is a supply chain."
+    mid: "Kestria absorbed the blows but never set the terms. The next crisis will start from the same weak position."
+    low: "The Veyl Crossing showed Varan exactly where to push. It will push there again."

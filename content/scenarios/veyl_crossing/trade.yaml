@@ -8,7 +8,8 @@ edges:
 
 # Imports. from: a nation id (subject to its export controls) or "world" (allied and neutral suppliers).
 #   capacity_per_day  most units that can be shipped per day, in the good's unit
-#   sea               arrives by ship through the port (war-risk insurance applies from M3)
+#   sea               arrives by ship through the port (war-risk insurance applies)
+#   closed            not in use at the start; a decision can open it
 imports:
   - { good: rare_earth_magnet, from: varan, to: kestria_interior, lead_days: 21, capacity_per_day: 5000,  sea: true }
   - { good: gallium,           from: varan, to: kestria_interior, lead_days: 21, capacity_per_day: 40,    sea: true }
@@ -17,3 +18,4 @@ imports:
   - { good: germanium_optic,   from: world, to: kestria_interior, lead_days: 30, capacity_per_day: 1000,  sea: true }
   - { good: battery_lithium,   from: world, to: kestria_interior, lead_days: 30, capacity_per_day: 800,   sea: true }
   - { good: diesel,            from: world, to: kestria_interior, lead_days: 14, capacity_per_day: 20000, sea: true }
+  - { good: rare_earth_magnet, from: world, to: kestria_interior, lead_days: 45, capacity_per_day: 800,   sea: true, closed: true }   # allied suppliers, at a price
